@@ -1,0 +1,174 @@
+@page "/family"
+
+@* Підключаємо готичні та сучасні шрифти *@
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Montserrat:wght@300;400;600&family=EB+Garamond:italic,wght@400;700&display=swap" rel="stylesheet">
+
+<PageTitle>Raven Family - Біографія</PageTitle>
+
+<div class="raven-page">
+    <div class="content-wrapper">
+
+        @* СЕКЦІЯ: БІОГРАФІЯ *@
+        <section class="bio-section">
+            <h2 class="section-title"><span class="icon">📜</span> Біографія сім'ї Raven</h2>
+            <div class="text-block">
+                <p>Сім'я Raven бере початок із північних земель, де виживали лише ті, хто вмів думати, чекати і бити точно. Їхній символ — ворон, птах війни й знання, що з'являється там, де скоро проллється кров.</p>
+                <p>Перші представники роду були воїнами й розвідниками, не тими, хто йшов першим у бій, а тими, хто знав, де і коли цей бій почнеться. Вони не кричали про силу — вони залишали після себе тишу.</p>
+                <p>З покоління в покоління Raven відмовлялися від сліпої люті. Їхній принцип був простий: <i>"Краще один точний удар, ніж сто бездумних."</i></p>
+            </div>
+        </section>
+
+        @* СЕКЦІЯ: ШЛЯХ У НОВИЙ СВІТ *@
+        <section class="bio-section">
+            <h2 class="section-title"><span class="icon">⚔️</span> Шлях у новий світ</h2>
+            <div class="text-block">
+                <p>З часом рід залишив Північ і розчинився серед цивілізацій. Вони не створювали імперій — вони керували тими, хто їх створював.</p>
+                <p>У новому світі сім'я <strong>Ragnar Raven</strong> стала закритою структурою:</p>
+                <ul class="simple-list">
+                    <li>• без публічності</li>
+                    <li>• без зайвих імен</li>
+                    <li>• без слабких ланок</li>
+                </ul>
+                <p>До сім'ї не потрапляють випадково. Тут не важлива кров — важлива відданість, холодна голова і дисципліна.</p>
+            </div>
+        </section>
+
+        @* СЕКЦІЯ: ФІЛОСОФІЯ *@
+        <section class="bio-section">
+            <h2 class="section-title"><span class="icon">👁️‍🗨️</span> Філософія сім'ї</h2>
+            <div class="text-block">
+                <p>Ми не герої і не монстри.<br>Ми — спостерігачі, стратеги, виконавці.</p>
+                <ul class="simple-list">
+                    <li>• Закон — інструмент</li>
+                    <li>• Хаос — можливість</li>
+                    <li>• Інформація — зброя</li>
+                </ul>
+                <p>Сім'я не діє емоціями. Якщо Ragnar Raven прийняв рішення — рішення вже прийняте.</p>
+            </div>
+        </section>
+
+        @* СЕКЦІЯ: ДЕВІЗ *@
+        <div class="motto-card">
+            <div class="motto-icon">🌐</div>
+            <h3 class="motto-label">Девіз сім'ї</h3>
+            <div class="motto-text">"We watch. We wait. We strike."</div>
+            <div class="motto-sub">(Ми спостерігаємо. Ми чекаємо. Ми б'ємо.)</div>
+        </div>
+
+        @* СЕКЦІЯ: КОРОТКО ДЛЯ КР *@
+        <div class="rp-info">
+            <h4 class="rp-title">🔥 Коротко для RP-доків</h4>
+            <div class="rp-grid">
+                <div><strong>Назва:</strong> Raven</div>
+                <div><strong>Тип:</strong> закрита сім'я / клан</div>
+                <div><strong>Стиль:</strong> холодний, стратегічний</div>
+                <div><strong>Репутація:</strong> тіньова еліта</div>
+                <div><strong>Символ:</strong> чорний ворон</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .raven-page {
+        background-color: #0d0d0d;
+        color: #d1d1d1;
+        font-family: 'Montserrat', sans-serif;
+        line-height: 1.8;
+        padding: 60px 20px;
+        min-height: 100vh;
+    }
+
+    .content-wrapper {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #121212;
+        padding: 40px;
+        border: 1px solid #1f1f1f;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    }
+
+    .section-title {
+        font-family: 'Cinzel', serif;
+        color: #d4af37; /* Золотий колір заголовків */
+        font-size: 1.6rem;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #2a2a2a;
+        padding-bottom: 10px;
+    }
+
+    .icon {
+        margin-right: 10px;
+    }
+
+    .text-block p {
+        margin-bottom: 20px;
+        font-weight: 300;
+        text-align: justify;
+    }
+
+    .simple-list {
+        list-style: none;
+        padding-left: 10px;
+        margin-bottom: 20px;
+        color: #ffffff;
+    }
+
+    /* Стиль девізу */
+    .motto-card {
+        margin: 50px 0;
+        padding: 30px;
+        text-align: center;
+        background: linear-gradient(145deg, #161616, #0a0a0a);
+        border: 1px solid #d4af37;
+        position: relative;
+    }
+
+    .motto-label {
+        font-family: 'Cinzel', serif;
+        color: #d4af37;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+    }
+
+    .motto-text {
+        font-family: 'EB Garamond', serif;
+        font-style: italic;
+        font-size: 2.2rem;
+        color: #ffffff;
+        margin: 10px 0;
+        text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+    }
+
+    .motto-sub {
+        color: #666;
+        font-size: 0.9rem;
+    }
+
+    /* RP Доки */
+    .rp-info {
+        background: #0a0a0a;
+        padding: 20px;
+        border-radius: 4px;
+        border-left: 4px solid #c41e3a; /* Червона лінія для акценту */
+    }
+
+    .rp-title {
+        color: #d4af37;
+        font-size: 1rem;
+        margin-bottom: 15px;
+    }
+
+    .rp-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        font-size: 0.85rem;
+    }
+
+    strong {
+        color: #ffffff;
+    }
+</style>

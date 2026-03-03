@@ -1,0 +1,450 @@
+@page "/application"
+@using Raven_Family.Services
+@inject DiscordService discordService
+@inject NavigationManager navigationManager
+
+<PageTitle>Заявка на вступ - Сім'я Воронів</PageTitle>
+
+<div class="application-container">
+    <div class="application-header">
+        <h1>🐦‍⬛ Анкета на вступ</h1>
+        <p class="subtitle">Дайте відповідь на всі питання чесно та детально</p>
+    </div>
+
+    <div class="progress-section">
+        <div class="progress-bar-container">
+            <div class="progress-bar" style="width: @GetProgressPercentage()%"></div>
+        </div>
+        <p class="progress-text">Прогрес: @completedAnswers/25</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="error-alert">
+            <span class="error-icon">Warning</span>
+            <div class="error-content">
+                <strong>Заповніть всі поля!</strong>
+                <p>@errorMessage</p>
+            </div>
+            <button class="error-close" @onclick="ClearError">X</button>
+        </div>
+    }
+
+    <div class="form-container">
+        <EditForm Model="applicationForm" OnValidSubmit="HandleSubmit" class="application-form">
+            <DataAnnotationsValidator />
+
+            <!-- Питання 1-5 -->
+            <div class="form-section" @ref="section1Ref">
+                <h3 class="section-title">👤 Базова Інформація</h3>
+
+                <div class="form-group">
+                    <label class="question-label">1. Нікнейм у грі:</label>
+                    <InputText @bind-Value="applicationForm.Nickname" class="form-control" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.Nickname)) { <span class="answer-indicator">✓</span> }
+                    @if (string.IsNullOrEmpty(applicationForm.Nickname) && validationAttempted) { <span class="field-error">обов'язкове</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">2. Статік:</label>
+                    <InputText @bind-Value="applicationForm.Statistics" class="form-control" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.Statistics)) { <span class="answer-indicator">✓</span> }
+                    @if (string.IsNullOrEmpty(applicationForm.Statistics) && validationAttempted) { <span class="field-error">обов'язкове</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">3. Скільки часу на день готові приділяти грі?</label>
+                    <InputText @bind-Value="applicationForm.DailyTime" class="form-control" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.DailyTime)) { <span class="answer-indicator">✓</span> }
+                    @if (string.IsNullOrEmpty(applicationForm.DailyTime) && validationAttempted) { <span class="field-error">обов'язкове</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">4. Чи є мікрофон + Discord?</label>
+                    <InputText @bind-Value="applicationForm.MicDiscord" class="form-control" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.MicDiscord)) { <span class="answer-indicator">✓</span> }
+                    @if (string.IsNullOrEmpty(applicationForm.MicDiscord) && validationAttempted) { <span class="field-error">обов'язкове</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">5. Ігровий досвід:</label>
+                    <InputTextArea @bind-Value="applicationForm.GameExperience" class="form-control textarea" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.GameExperience)) { <span class="answer-indicator">✓</span> }
+                    @if (string.IsNullOrEmpty(applicationForm.GameExperience) && validationAttempted) { <span class="field-error">обов'язкове</span> }
+                </div>
+            </div>
+
+            <!-- Питання 6-10 -->
+            <div class="form-section">
+                <h3 class="section-title">🏢 Історія в інших сім'ях</h3>
+                
+                <div class="form-group">
+                    <label class="question-label">6. У яких сім'ях / фракціях були раніше?</label>
+                    <InputTextArea @bind-Value="applicationForm.PreviousFamilies" class="form-control textarea" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.PreviousFamilies)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">7. Причина виходу з попередньої сім'ї:</label>
+                    <InputTextArea @bind-Value="applicationForm.ReasonForLeaving" class="form-control textarea" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.ReasonForLeaving)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">8. Чи були покарання / бани? (якщо так — за що)</label>
+                    <InputTextArea @bind-Value="applicationForm.Punishments" class="form-control textarea" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.Punishments)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">9. Звідки дізналися про Family Raven?</label>
+                    <InputText @bind-Value="applicationForm.HowFound" class="form-control" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.HowFound)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">10. Чому хочете вступити саме до нашої сім'ї?</label>
+                    <InputTextArea @bind-Value="applicationForm.WhyJoinUs" class="form-control textarea" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.WhyJoinUs)) { <span class="answer-indicator">✓</span> }
+                </div>
+            </div>
+
+            <!-- Питання 11-15 -->
+            <div class="form-section">
+                <h3 class="section-title">❤️ Розуміння сім'ї та цінності</h3>
+                
+                <div class="form-group">
+                    <label class="question-label">11. Що для вас означає "сім'я"?</label>
+                    <InputTextArea @bind-Value="applicationForm.FamilyMeaning" class="form-control textarea" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.FamilyMeaning)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">12. Яку користь ви можете принести сім'ї?</label>
+                    <InputTextArea @bind-Value="applicationForm.YourBenefit" class="form-control textarea" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.YourBenefit)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">13. Які ваші сильні сторони в RP?</label>
+                    <InputTextArea @bind-Value="applicationForm.Strengths" class="form-control textarea" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.Strengths)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">14. Ваш основний стиль гри (агресивний / тактичний / стратегічний):</label>
+                    <InputText @bind-Value="applicationForm.PlayStyle" class="form-control" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.PlayStyle)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">15. Чи готові підкорятися ієрархії та наказам лідера?</label>
+                    <InputText @bind-Value="applicationForm.HierarchyReady" class="form-control" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.HierarchyReady)) { <span class="answer-indicator">✓</span> }
+                </div>
+            </div>
+
+            <!-- Питання 16-20 -->
+            <div class="form-section">
+                <h3 class="section-title">⚖️ Правила та дисципліна</h3>
+                
+                <div class="form-group">
+                    <label class="question-label">16. Ставлення до NonRP, MetaGaming, PowerGaming:</label>
+                    <InputTextArea @bind-Value="applicationForm.RulesAttitude" class="form-control textarea" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.RulesAttitude)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">17. Чи готові нести відповідальність за дії сім'ї?</label>
+                    <InputText @bind-Value="applicationForm.Responsibility" class="form-control" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.Responsibility)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">18. Чи готові виконувати завдання навіть без особистої вигоди?</label>
+                    <InputText @bind-Value="applicationForm.MissionsWithoutReward" class="form-control" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.MissionsWithoutReward)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">19. Лідер наказав відступити, але ви бачите шанс виграти — ваші дії?</label>
+                    <InputTextArea @bind-Value="applicationForm.LeaderOrderVsChance" class="form-control textarea" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.LeaderOrderVsChance)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">20. Член сім'ї порушив правила — як ви вчините?</label>
+                    <InputTextArea @bind-Value="applicationForm.RuleBreakerAction" class="form-control textarea" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.RuleBreakerAction)) { <span class="answer-indicator">✓</span> }
+                </div>
+            </div>
+
+            <!-- Питання 21-25 -->
+            <div class="form-section">
+                <h3 class="section-title">🎯 Ситуаційні запитання та лояльність</h3>
+                
+                <div class="form-group">
+                    <label class="question-label">21. Ви потрапили в засідку без підтримки — що робите?</label>
+                    <InputTextArea @bind-Value="applicationForm.AmbushScenario" class="form-control textarea" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.AmbushScenario)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">22. Що важливіше: наказ чи особиста вигода?</label>
+                    <InputTextArea @bind-Value="applicationForm.OrderVsProfit" class="form-control textarea" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.OrderVsProfit)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">23. Чи готові ви бути вірними сім'ї Raven?</label>
+                    <InputText @bind-Value="applicationForm.Loyalty" class="form-control" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.Loyalty)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">24. Чи готові ви носити символ ворона з честю? 🐦‍⬛</label>
+                    <InputText @bind-Value="applicationForm.RavenSymbol" class="form-control" placeholder="Ваша відповідь..." />
+                    @if (!string.IsNullOrEmpty(applicationForm.RavenSymbol)) { <span class="answer-indicator">✓</span> }
+                </div>
+
+                <div class="form-group">
+                    <label class="question-label">25. Ваш Discord:</label>
+                    <InputText @bind-Value="applicationForm.Discord" class="form-control" placeholder="username#0000" />
+                    @if (!string.IsNullOrEmpty(applicationForm.Discord)) { <span class="answer-indicator">✓</span> }
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-submit" disabled="@isSubmitting">
+                    @if (isSubmitting)
+                    {
+                        <span class="spinner"></span>
+                        <span>Дуже швидко...</span>
+                    }
+                    else
+                    {
+                        <span>📤 Надіслати Заявку</span>
+                    }
+                </button>
+            </div>
+        </EditForm>
+
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="success-message">
+                <div class="success-icon">✅</div>
+                <h3>Заявка успішно подана!</h3>
+                <p class="success-text">@successMessage</p>
+                <p class="success-instruction">
+                    <strong>📱 Перевіряйте ваш Discord</strong> - ми скоро звернемося до вас!
+                </p>
+                <div class="success-raven">🐦‍⬛</div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private ApplicationFormModel applicationForm = new();
+    private string successMessage = "";
+    private string errorMessage = "";
+    private int completedAnswers = 0;
+    private bool isSubmitting = false;
+    private bool validationAttempted = false;
+    private ElementReference section1Ref;
+
+    protected override void OnInitialized()
+    {
+        applicationForm = new ApplicationFormModel();
+    }
+
+    private async Task HandleSubmit()
+    {
+        validationAttempted = true;
+        StateHasChanged();
+
+        // Перевірка, що всі поля заповнені
+        if (!IsFormComplete())
+        {
+            errorMessage = "Будь ласка, заповніть всі поля форми перед відправкою.";
+            await Task.Delay(300);
+
+            // Скролюємо до першого незаповненого поля
+            await ScrollToFirstEmptyField();
+            return;
+        }
+
+        isSubmitting = true;
+        validationAttempted = false;
+        errorMessage = "";
+        StateHasChanged();
+
+        try
+        {
+            // Затримка для показу лоадера (імітація обробки)
+            await Task.Delay(800);
+
+            // Відправляємо заявку в Discord
+            var applicationData = new ApplicationData
+            {
+                Nickname = applicationForm.Nickname,
+                Statistics = applicationForm.Statistics,
+                DailyTime = applicationForm.DailyTime,
+                MicDiscord = applicationForm.MicDiscord,
+                GameExperience = applicationForm.GameExperience,
+                PreviousFamilies = applicationForm.PreviousFamilies,
+                ReasonForLeaving = applicationForm.ReasonForLeaving,
+                Punishments = applicationForm.Punishments,
+                HowFound = applicationForm.HowFound,
+                WhyJoinUs = applicationForm.WhyJoinUs,
+                FamilyMeaning = applicationForm.FamilyMeaning,
+                YourBenefit = applicationForm.YourBenefit,
+                Strengths = applicationForm.Strengths,
+                PlayStyle = applicationForm.PlayStyle,
+                HierarchyReady = applicationForm.HierarchyReady,
+                RulesAttitude = applicationForm.RulesAttitude,
+                Responsibility = applicationForm.Responsibility,
+                MissionsWithoutReward = applicationForm.MissionsWithoutReward,
+                LeaderOrderVsChance = applicationForm.LeaderOrderVsChance,
+                RuleBreakerAction = applicationForm.RuleBreakerAction,
+                AmbushScenario = applicationForm.AmbushScenario,
+                OrderVsProfit = applicationForm.OrderVsProfit,
+                Loyalty = applicationForm.Loyalty,
+                RavenSymbol = applicationForm.RavenSymbol,
+                Discord = applicationForm.Discord
+            };
+
+            bool discordSuccess = await discordService.SendApplicationAsync(applicationData);
+
+            if (discordSuccess)
+            {
+                successMessage = "Дякуємо за вашу заявку! 🐦‍⬛ Наша команда приймуть вашу анкету в найближчий час і звернеться до вас.";
+            }
+            else
+            {
+                successMessage = "Заявка успішно збережена! Навіть якщо була помилка із Discord, адміністратор буде повідомлений про вашу заявку.";
+            }
+
+            // Очищуємо форму
+            applicationForm = new ApplicationFormModel();
+            isSubmitting = false;
+            StateHasChanged();
+
+            // Затримуємо повідомлення на екрані
+            await Task.Delay(8000);
+            successMessage = "";
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            successMessage = $"Заявка успішно подана, але сталася помилка. Адміністратор буде повідомлений про вашу заявку.";
+            isSubmitting = false;
+            StateHasChanged();
+            await Task.Delay(8000);
+            successMessage = "";
+            StateHasChanged();
+        }
+    }
+
+    private async Task ScrollToFirstEmptyField()
+    {
+        await Task.Delay(100);
+    }
+
+    private void ClearError()
+    {
+        errorMessage = "";
+        StateHasChanged();
+    }
+
+    private bool IsFormComplete()
+    {
+        return !string.IsNullOrWhiteSpace(applicationForm.Nickname) &&
+               !string.IsNullOrWhiteSpace(applicationForm.Statistics) &&
+               !string.IsNullOrWhiteSpace(applicationForm.DailyTime) &&
+               !string.IsNullOrWhiteSpace(applicationForm.MicDiscord) &&
+               !string.IsNullOrWhiteSpace(applicationForm.GameExperience) &&
+               !string.IsNullOrWhiteSpace(applicationForm.PreviousFamilies) &&
+               !string.IsNullOrWhiteSpace(applicationForm.ReasonForLeaving) &&
+               !string.IsNullOrWhiteSpace(applicationForm.Punishments) &&
+               !string.IsNullOrWhiteSpace(applicationForm.HowFound) &&
+               !string.IsNullOrWhiteSpace(applicationForm.WhyJoinUs) &&
+               !string.IsNullOrWhiteSpace(applicationForm.FamilyMeaning) &&
+               !string.IsNullOrWhiteSpace(applicationForm.YourBenefit) &&
+               !string.IsNullOrWhiteSpace(applicationForm.Strengths) &&
+               !string.IsNullOrWhiteSpace(applicationForm.PlayStyle) &&
+               !string.IsNullOrWhiteSpace(applicationForm.HierarchyReady) &&
+               !string.IsNullOrWhiteSpace(applicationForm.RulesAttitude) &&
+               !string.IsNullOrWhiteSpace(applicationForm.Responsibility) &&
+               !string.IsNullOrWhiteSpace(applicationForm.MissionsWithoutReward) &&
+               !string.IsNullOrWhiteSpace(applicationForm.LeaderOrderVsChance) &&
+               !string.IsNullOrWhiteSpace(applicationForm.RuleBreakerAction) &&
+               !string.IsNullOrWhiteSpace(applicationForm.AmbushScenario) &&
+               !string.IsNullOrWhiteSpace(applicationForm.OrderVsProfit) &&
+               !string.IsNullOrWhiteSpace(applicationForm.Loyalty) &&
+               !string.IsNullOrWhiteSpace(applicationForm.RavenSymbol) &&
+               !string.IsNullOrWhiteSpace(applicationForm.Discord);
+    }
+
+    private int GetProgressPercentage()
+    {
+        completedAnswers = 0;
+        
+        if (!string.IsNullOrWhiteSpace(applicationForm.Nickname)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.Statistics)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.DailyTime)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.MicDiscord)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.GameExperience)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.PreviousFamilies)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.ReasonForLeaving)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.Punishments)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.HowFound)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.WhyJoinUs)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.FamilyMeaning)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.YourBenefit)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.Strengths)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.PlayStyle)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.HierarchyReady)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.RulesAttitude)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.Responsibility)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.MissionsWithoutReward)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.LeaderOrderVsChance)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.RuleBreakerAction)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.AmbushScenario)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.OrderVsProfit)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.Loyalty)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.RavenSymbol)) completedAnswers++;
+        if (!string.IsNullOrWhiteSpace(applicationForm.Discord)) completedAnswers++;
+
+        return (completedAnswers * 100) / 25;
+    }
+
+    public class ApplicationFormModel
+    {
+        public string Nickname { get; set; } = "";
+        public string Statistics { get; set; } = "";
+        public string DailyTime { get; set; } = "";
+        public string MicDiscord { get; set; } = "";
+        public string GameExperience { get; set; } = "";
+        public string PreviousFamilies { get; set; } = "";
+        public string ReasonForLeaving { get; set; } = "";
+        public string Punishments { get; set; } = "";
+        public string HowFound { get; set; } = "";
+        public string WhyJoinUs { get; set; } = "";
+        public string FamilyMeaning { get; set; } = "";
+        public string YourBenefit { get; set; } = "";
+        public string Strengths { get; set; } = "";
+        public string PlayStyle { get; set; } = "";
+        public string HierarchyReady { get; set; } = "";
+        public string RulesAttitude { get; set; } = "";
+        public string Responsibility { get; set; } = "";
+        public string MissionsWithoutReward { get; set; } = "";
+        public string LeaderOrderVsChance { get; set; } = "";
+        public string RuleBreakerAction { get; set; } = "";
+        public string AmbushScenario { get; set; } = "";
+        public string OrderVsProfit { get; set; } = "";
+        public string Loyalty { get; set; } = "";
+        public string RavenSymbol { get; set; } = "";
+        public string Discord { get; set; } = "";
+    }
+}

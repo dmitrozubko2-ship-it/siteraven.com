@@ -1,0 +1,413 @@
+@page "/contracts"
+@using Raven_Family.Services
+@using Raven_Family.Models
+@inject AuthService authService
+
+<PageTitle>Контракти - Сім'я Воронів</PageTitle>
+
+@if (!authService.IsLoggedIn())
+{
+    <div class="alert alert-warning">
+        <p>Будь ласка, <a href="/login">увійдіть</a> щоб брати контракти.</p>
+    </div>
+}
+else
+{
+    <div class="contracts-container">
+        <div class="contracts-header">
+            <h1>📋 Контракти</h1>
+            <p>Створюй та управляй контрактами в сім'ї</p>
+        </div>
+
+        <!-- Форма для створення контракту -->
+        <div style="background: rgba(50, 20, 70, 0.5); border: 2px solid #8b3a8b; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
+            <h3 style="color: #ffd700; margin-top: 0;">✏️ Створити Контракт</h3>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #ddd;">Назва контракту</label>
+                <input type="text" class="form-control" @bind="newContract.Title" placeholder="Введіть назву контракту" />
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #ddd;">Опис</label>
+                <textarea class="form-control" @bind="newContract.Description" placeholder="Введіть опис контракту" style="min-height: 80px;"></textarea>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #ddd;">Статус</label>
+                <select class="form-control" @bind="newContract.Status">
+                    <option value="pending">⏳ Очікує виконання</option>
+                    <option value="in-progress">🔄 Виконується</option>
+                    <option value="completed">✓ Виконано</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; color: #ddd;">Винагорода (монети)</label>
+                <input type="number" class="form-control" @bind="newContract.Reward" placeholder="0" />
+            </div>
+            <button class="btn btn-primary" @onclick="AddContract" style="width: 100%;">➕ Створити Контракт</button>
+        </div>
+
+        <!-- Таби для фільтрації -->
+        <div class="contracts-tabs">
+            <button class="tab @(selectedStatus == "" ? "active" : "")" @onclick='() => SetStatus("")'>
+                📋 Всі контракти
+            </button>
+            <button class="tab @(selectedStatus == "pending" ? "active" : "")" @onclick='() => SetStatus("pending")'>
+                ⏳ Очікує
+            </button>
+            <button class="tab @(selectedStatus == "in-progress" ? "active" : "")" @onclick='() => SetStatus("in-progress")'>
+                🔄 Виконується
+            </button>
+            <button class="tab @(selectedStatus == "completed" ? "active" : "")" @onclick='() => SetStatus("completed")'>
+                ✓ Виконано
+            </button>
+        </div>
+
+        <!-- Список контрактів -->
+        <div class="contracts-list">
+            @if (GetFilteredContracts().Count == 0)
+            {
+                <div style="text-align: center; padding: 3rem; color: rgba(232, 232, 232, 0.6);">
+                    <p style="font-size: 1.2rem;">📭 Контрактів не знайдено</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var contract in GetFilteredContracts())
+                {
+                    <div class="contract-card @GetStatusClass(contract.Status)">
+                        <div class="contract-header">
+                            <h3>@contract.Title</h3>
+                            <span class="status-badge">@GetStatusBadge(contract.Status)</span>
+                        </div>
+                        <p class="description">@contract.Description</p>
+                        <div class="contract-details">
+                            <div class="detail">
+                                <span class="label">Винагорода:</span>
+                                <span class="value">💰 @contract.Reward монет</span>
+                            </div>
+                            <div class="detail">
+                                <span class="label">Статус:</span>
+                                <span class="value">@GetStatusText(contract.Status)</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 15px;">
+                            @if (contract.Status != "completed")
+                            {
+                                <button class="btn-status" @onclick="async () => MarkCompleted(contract)">
+                                    ✓ Завершити
+                                </button>
+                            }
+                            @if (contract.Status != "in-progress")
+                            {
+                                <button class="btn-status" @onclick="async () => MarkInProgress(contract)">
+                                    🔄 В процесі
+                                </button>
+                            }
+                            <button class="btn-delete" @onclick="async () => DeleteContractMethod(contract)">
+                                🗑️ Видалити
+                            </button>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private List<Contract> contracts = new();
+    private Contract newContract = new();
+    private string selectedStatus = "";
+
+    protected override void OnInitialized()
+    {
+        // Демо-дані
+        contracts = new List<Contract>
+        {
+            new Contract { Id = 1, Title = "Оновити галерею", Description = "Додати 5 нових фото", Status = "in-progress", Reward = 100 },
+            new Contract { Id = 2, Title = "Модерація форуму", Description = "Перевірити нові дописи", Status = "pending", Reward = 50 },
+            new Contract { Id = 3, Title = "Вступний тур", Description = "Завершити реєстрацію", Status = "completed", Reward = 50 }
+        };
+    }
+
+    private void AddContract()
+    {
+        if (string.IsNullOrWhiteSpace(newContract.Title) || string.IsNullOrWhiteSpace(newContract.Description))
+        {
+            return;
+        }
+
+        newContract.Id = contracts.Count > 0 ? contracts.Max(c => c.Id) + 1 : 1;
+        contracts.Add(new Contract
+        {
+            Id = newContract.Id,
+            Title = newContract.Title,
+            Description = newContract.Description,
+            Status = newContract.Status,
+            Reward = newContract.Reward
+        });
+
+        newContract = new Contract { Status = "pending" };
+        StateHasChanged();
+    }
+
+    private void UpdateContractStatus(Contract contract, string newStatus)
+    {
+        var existing = contracts.FirstOrDefault(c => c.Id == contract.Id);
+        if (existing != null)
+        {
+            existing.Status = newStatus;
+            StateHasChanged();
+        }
+    }
+
+    private void MarkCompleted(Contract contract)
+    {
+        UpdateContractStatus(contract, "completed");
+    }
+
+    private void MarkInProgress(Contract contract)
+    {
+        UpdateContractStatus(contract, "in-progress");
+    }
+
+    private void DeleteContractMethod(Contract contract)
+    {
+        DeleteContract(contract);
+    }
+
+    private void DeleteContract(Contract contract)
+    {
+        contracts.Remove(contract);
+        StateHasChanged();
+    }
+
+    private List<Contract> GetFilteredContracts()
+    {
+        if (string.IsNullOrEmpty(selectedStatus))
+        {
+            return contracts;
+        }
+        return contracts.Where(c => c.Status == selectedStatus).ToList();
+    }
+
+    private void SetStatus(string status)
+    {
+        selectedStatus = status;
+    }
+
+    private string GetStatusClass(string status) => status switch
+    {
+        "pending" => "status-pending",
+        "in-progress" => "status-in-progress",
+        "completed" => "status-completed",
+        _ => ""
+    };
+
+    private string GetStatusBadge(string status) => status switch
+    {
+        "pending" => "⏳ Очікує",
+        "in-progress" => "🔄 Виконується",
+        "completed" => "✓ Виконано",
+        _ => ""
+    };
+
+    private string GetStatusText(string status) => status switch
+    {
+        "pending" => "Очікує виконання",
+        "in-progress" => "Виконується",
+        "completed" => "Виконано",
+        _ => ""
+    };
+
+    public class Contract
+    {
+        public int Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string Status { get; set; } = "pending";
+        public int Reward { get; set; } = 0;
+    }
+}
+
+<style>
+.contracts-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.contracts-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.contracts-header h1 {
+    color: #ffd700;
+    font-size: 2.5em;
+    margin: 0 0 10px 0;
+}
+
+.contracts-header p {
+    color: rgba(232, 232, 232, 0.8);
+    font-size: 1.1em;
+}
+
+.contracts-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.tab {
+    background: rgba(50, 20, 70, 0.5);
+    border: 2px solid #8b3a8b;
+    color: #ddd;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+}
+
+.tab:hover,
+.tab.active {
+    background: #8b3a8b;
+    color: white;
+    border-color: #c41e3a;
+}
+
+.contracts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.contract-card {
+    background: rgba(50, 20, 70, 0.5);
+    border: 2px solid #8b3a8b;
+    border-radius: 12px;
+    padding: 20px;
+    color: white;
+    transition: all 0.3s;
+}
+
+.contract-card:hover {
+    border-color: #c41e3a;
+    box-shadow: 0 0 20px rgba(196, 30, 58, 0.3);
+    transform: translateY(-2px);
+}
+
+.contract-card.status-pending {
+    border-left: 5px solid #ffc107;
+}
+
+.contract-card.status-in-progress {
+    border-left: 5px solid #2196f3;
+}
+
+.contract-card.status-completed {
+    border-left: 5px solid #4caf50;
+}
+
+.contract-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.contract-header h3 {
+    margin: 0;
+    color: #ffd700;
+    font-size: 1.3em;
+}
+
+.status-badge {
+    font-size: 0.9em;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.description {
+    color: rgba(232, 232, 232, 0.8);
+    margin: 0 0 15px 0;
+}
+
+.contract-details {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.detail {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.95em;
+}
+
+.detail:last-child {
+    margin-bottom: 0;
+}
+
+.label {
+    color: rgba(232, 232, 232, 0.7);
+}
+
+.value {
+    color: #ffd700;
+    font-weight: bold;
+}
+
+.btn-status,
+.btn-delete {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+    font-size: 0.9em;
+}
+
+.btn-status {
+    background: #8b3a8b;
+    color: white;
+}
+
+.btn-status:hover {
+    background: #c41e3a;
+    transform: translateY(-2px);
+}
+
+.btn-delete {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+    transform: translateY(-2px);
+}
+
+.alert {
+    background: rgba(220, 53, 69, 0.2);
+    border: 2px solid #dc3545;
+    color: #ffa5a5;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.alert a {
+    color: #ffd700;
+    font-weight: bold;
+}
+</style>

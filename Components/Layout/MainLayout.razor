@@ -1,0 +1,82 @@
+﻿@inherits LayoutComponentBase
+@rendermode InteractiveServer
+
+<div class="particles-bg" id="particlesContainer"></div>
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+
+    <main>
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+<script>
+    initializeParticles();
+    initializeFeathers();
+    initializeRavens();
+
+    function initializeParticles() {
+        const container = document.getElementById('particlesContainer');
+        if (!container) return;
+
+        const particleCount = 50;
+        for (let i = 0; i < particleCount; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 20 + 's';
+            particle.style.animationDuration = (Math.random() * 15 + 20) + 's';
+            particle.style.opacity = Math.random() * 0.5 + 0.3;
+            particle.style.width = (Math.random() * 4 + 2) + 'px';
+            particle.style.height = particle.style.width;
+            container.appendChild(particle);
+        }
+    }
+
+    function initializeFeathers() {
+        const featherCount = 8;
+        for (let i = 0; i < featherCount; i++) {
+            const feather = document.createElement('div');
+            feather.className = 'feather';
+            feather.textContent = '🪶';
+            feather.style.left = Math.random() * 100 + 'vw';
+            feather.style.animationDelay = Math.random() * 8 + 's';
+            feather.style.animationDuration = (Math.random() * 4 + 8) + 's';
+            document.body.appendChild(feather);
+
+            // Повторне відтворення анімації
+            setTimeout(() => feather.remove(), (Math.random() * 4 + 8) * 1000);
+        }
+        // Повторяємо кожні 10 секунд
+        setInterval(initializeFeathers, 10000);
+    }
+
+    function initializeRavens() {
+        const ravenCount = 3;
+        for (let i = 0; i < ravenCount; i++) {
+            const raven = document.createElement('div');
+            raven.className = 'raven-fly';
+            raven.textContent = '🐦';
+            raven.style.top = (Math.random() * 60 + 10) + '%';
+            raven.style.animationDelay = (i * 5) + 's';
+            raven.style.animationDuration = (Math.random() * 5 + 15) + 's';
+            document.body.appendChild(raven);
+
+            setTimeout(() => raven.remove(), (Math.random() * 5 + 15) * 1000);
+        }
+        // Повторяємо кожні 20 секунд
+        setInterval(initializeRavens, 20000);
+    }
+</script>

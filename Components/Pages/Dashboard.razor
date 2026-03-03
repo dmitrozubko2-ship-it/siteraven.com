@@ -1,0 +1,307 @@
+@page "/dashboard"
+@using Raven_Family.Services
+@using Raven_Family.Models
+@inject StatisticsService statisticsService
+@inject NavigationManager navigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Статистика - Сім'я Воронів</PageTitle>
+
+<div class="dashboard-container">
+    <h1>📊 Статистика Сім'ї Воронів</h1>
+
+    <!-- Система реального часу -->
+    <div class="stats-grid">
+        @if (systemStats != null)
+        {
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <h3>Учасників</h3>
+                <p class="stat-big">@systemStats.TotalUsers</p>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">🟢</div>
+                <h3>Онлайн</h3>
+                <p class="stat-big">@systemStats.OnlineUsers</p>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <h3>Заявок сьогодні</h3>
+                <p class="stat-big">@systemStats.NewApplicationsToday</p>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">📜</div>
+                <h3>Контрактів</h3>
+                <p class="stat-big">@systemStats.TotalContracts</p>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">💎</div>
+                <h3>Монет в обігу</h3>
+                <p class="stat-big">@(systemStats.TotalCoinsInCirculation / 1000)k</p>
+            </div>
+
+            <div class="stat-card @(systemStats.ServerStatusGood ? "online" : "offline")">
+                <div class="stat-icon">⚙️</div>
+                <h3>Статус</h3>
+                <p class="stat-big">@(systemStats.ServerStatusGood ? "✅ OK" : "❌ Error")</p>
+            </div>
+        }
+    </div>
+
+    <!-- Топ активних -->
+    <div class="leaderboard-section">
+        <h2>🔝 Топ Активних</h2>
+        @if (topActive != null && topActive.Count > 0)
+        {
+            <div class="leaderboard">
+                @{
+                    int rank = 1;
+                }
+                @foreach (var entry in topActive.Take(5))
+                {
+                    <div class="leaderboard-item">
+                        <span class="rank">@(rank)</span>
+                        <span class="name">@entry.Key</span>
+                        <span class="points">@entry.Value 🎯</span>
+                    </div>
+                    rank++;
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Топ ветеранів -->
+    <div class="leaderboard-section">
+        <h2>👴 Топ Ветеранів (за днями)</h2>
+        @if (topVeterans != null && topVeterans.Count > 0)
+        {
+            <div class="leaderboard">
+                @{
+                    int vetRank = 1;
+                }
+                @foreach (var entry in topVeterans.Take(5))
+                {
+                    <div class="leaderboard-item">
+                        <span class="rank">@(vetRank)</span>
+                        <span class="name">@entry.Key</span>
+                        <span class="points">@(entry.Value) днів 📅</span>
+                    </div>
+                    vetRank++;
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Активність за тиждень -->
+    <div class="activity-section">
+        <h2>📈 Активність за тиждень</h2>
+        @if (weeklyActivity != null && weeklyActivity.Count > 0)
+        {
+            <div class="activity-chart">
+                @foreach (var stat in weeklyActivity)
+                {
+                    <div class="activity-day">
+                        <div class="day-name">@GetDayName(stat.DayOfWeek)</div>
+                        <div class="activity-bar" style="height: @(stat.ActiveUsersCount * 5)px; background: linear-gradient(135deg, #8b3a8b, #c41e3a);"></div>
+                        <div class="day-count">@stat.ActiveUsersCount</div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .dashboard-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        color: #fff;
+    }
+
+    h1 {
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 2.5em;
+        background: linear-gradient(135deg, #8b3a8b, #c41e3a);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+    }
+
+    .stat-card {
+        background: rgba(50, 20, 70, 0.6);
+        border: 2px solid #8b3a8b;
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        border-color: #c41e3a;
+        box-shadow: 0 10px 30px rgba(196, 30, 58, 0.3);
+    }
+
+    .stat-icon {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+    }
+
+    .stat-big {
+        font-size: 2em;
+        font-weight: bold;
+        color: #ffd700;
+        margin: 10px 0;
+    }
+
+    .stat-card.offline .stat-big {
+        color: #ff6b6b;
+    }
+
+    .leaderboard-section {
+        background: rgba(50, 20, 70, 0.5);
+        border: 2px solid #8b3a8b;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+    }
+
+    .leaderboard {
+        list-style: none;
+        padding: 0;
+    }
+
+    .leaderboard-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px;
+        border-bottom: 1px solid rgba(139, 58, 139, 0.3);
+        transition: all 0.2s ease;
+    }
+
+    .leaderboard-item:hover {
+        background: rgba(139, 58, 139, 0.2);
+    }
+
+    .rank {
+        background: linear-gradient(135deg, #ffd700, #c41e3a);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: bold;
+        min-width: 30px;
+    }
+
+    .name {
+        flex: 1;
+        margin-left: 20px;
+    }
+
+    .points {
+        font-weight: bold;
+        color: #8b3a8b;
+    }
+
+    .activity-section {
+        background: rgba(50, 20, 70, 0.5);
+        border: 2px solid #8b3a8b;
+        border-radius: 12px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+    }
+
+    .activity-chart {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .activity-day {
+        text-align: center;
+    }
+
+    .day-name {
+        font-size: 0.9em;
+        color: #8b3a8b;
+        margin-bottom: 10px;
+    }
+
+    .activity-bar {
+        width: 100%;
+        min-height: 40px;
+        border-radius: 4px;
+        margin-bottom: 8px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .activity-bar:hover {
+        box-shadow: 0 5px 15px rgba(196, 30, 58, 0.4);
+    }
+
+    .day-count {
+        font-size: 0.85em;
+        color: #ffd700;
+        font-weight: bold;
+    }
+</style>
+
+@code {
+    private SystemStats? systemStats;
+    private Dictionary<string, int>? topActive;
+    private Dictionary<string, int>? topVeterans;
+    private List<ActivityStatistic>? weeklyActivity;
+
+    protected override async Task OnInitializedAsync()
+    {
+        systemStats = await statisticsService.GetSystemStatsAsync();
+        topActive = await statisticsService.GetTopActiveUsersAsync();
+        topVeterans = await statisticsService.GetTopVeteransAsync();
+        weeklyActivity = await statisticsService.GetWeeklyActivityAsync();
+
+        // Оновлення даних кожні 30 секунд
+        _ = Task.Run(UpdateStatsAsync);
+    }
+
+    private async Task UpdateStatsAsync()
+    {
+        while (true)
+        {
+            await Task.Delay(30000);
+            systemStats = await statisticsService.GetSystemStatsAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private string GetDayName(int dayOfWeek)
+    {
+        return dayOfWeek switch
+        {
+            0 => "Нд",
+            1 => "Пн",
+            2 => "Вт",
+            3 => "Ср",
+            4 => "Чт",
+            5 => "Пт",
+            6 => "Сб",
+            _ => "?"
+        };
+    }
+}

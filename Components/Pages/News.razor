@@ -1,0 +1,157 @@
+@page "/news"
+@using System.Collections.Generic
+@inject NavigationManager navigationManager
+
+<PageTitle>Новини - Raven Family</PageTitle>
+
+<div class="content">
+    <h1 style="text-align: center; margin-top: 0;">📰 Останні Новини 📰</h1>
+    <p style="text-align: center; color: rgba(232, 232, 232, 0.8); font-size: 1.1rem;">
+        Дізнавайтеся про найсвіжіші eventi та оновлення нашої сім'ї
+    </p>
+
+    <!-- Форма для створення нової новини -->
+    <div style="background: rgba(50, 20, 70, 0.5); border: 2px solid #8b3a8b; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
+        <h3 style="color: #ffd700; margin-top: 0;">✏️ Створити Новину</h3>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #ddd;">Заголовок</label>
+            <input type="text" class="form-control" @bind="newNews.Title" placeholder="Введіть заголовок новини" />
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #ddd;">Зміст</label>
+            <textarea class="form-control" @bind="newNews.Content" placeholder="Введіть текст новини" style="min-height: 100px;"></textarea>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #ddd;">Значок емодзі</label>
+            <input type="text" class="form-control" @bind="newNews.Icon" placeholder="Наприклад: 📰" maxlength="2" />
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #ddd;">Автор</label>
+            <input type="text" class="form-control" @bind="newNews.Author" placeholder="Ваше ім'я" />
+        </div>
+        <button class="btn btn-primary" @onclick="AddNews" style="width: 100%;">➕ Додати Новину</button>
+    </div>
+
+    <div class="news-section">
+        @foreach (var news in newsItems)
+        {
+            <div class="news-card">
+                <div style="display: flex; align-items: flex-start; gap: 1rem;">
+                    <div class="news-icon">@news.Icon</div>
+                    <div style="flex: 1;">
+                        <div class="news-title">@news.Title</div>
+                        <div class="news-content">@news.Content</div>
+                        @if (!string.IsNullOrEmpty(news.Author))
+                        {
+                            <div style="color: rgba(232, 232, 232, 0.6); font-size: 0.85rem; margin-top: 0.5rem;">
+                                Автор: <strong style="color: var(--accent-color);">@news.Author</strong>
+                            </div>
+                        }
+                        <div class="news-date">@news.Date.ToString("dd MMMM yyyy, HH:mm")</div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private List<NewsItem> newsItems = new();
+    private NewsItem newNews = new NewsItem();
+
+    protected override void OnInitialized()
+    {
+        LoadNews();
+    }
+
+    private void LoadNews()
+    {
+        if (newsItems.Count == 0)
+        {
+            newsItems = new List<NewsItem>
+            {
+                new NewsItem
+                {
+                    Icon = "👥",
+                    Title = "Новий учасник приєднався до сім'ї!",
+                    Content = "Рідкісна честь прийняти нового члена нашої сім'ї. Добро пожалувати, 'Phoenix'! Ми сподіваємось, що ти будеш гідним членом нашого братства.",
+                    Author = "Ragnar",
+                    Date = DateTime.Now.AddDays(-1)
+                },
+                new NewsItem
+                {
+                    Icon = "🎮",
+                    Title = "Великий турнір почнеться наступного тижня!",
+                    Content = "Всі членів сім'ї запрошуються брати участь у великому турнірі. Переможець отримає спеціальний титул і винагороду. Реєстрація відкрита!",
+                    Author = "ShadowRaven",
+                    Date = DateTime.Now.AddDays(-2)
+                },
+                new NewsItem
+                {
+                    Icon = "📋",
+                    Title = "Оновлено правила сім'ї",
+                    Content = "Деякі правила були оновлені для кращого управління. Будь ласка, прочитайте нові норми на сторінці 'Правила'. Всі мають дотримуватися цих змін.",
+                    Author = "Ragnar",
+                    Date = DateTime.Now.AddDays(-5)
+                },
+                new NewsItem
+                {
+                    Icon = "🏆",
+                    Title = "Величне досягнення - 100 успішних місій!",
+                    Content = "Святкуємо 100-у успішну місію нашої сім'ї! Це великий залік всім учасникам за їх відданість та роботу. Це лише початок нашої слави!",
+                    Author = "Ragnar",
+                    Date = DateTime.Now.AddDays(-8)
+                },
+                new NewsItem
+                {
+                    Icon = "⚔️",
+                    Title = "Офіцер 'NightWing' отримав просування",
+                    Content = "NightWing був підвищений до вищого ранга за виключну відданість та лідерські якості. Вітаємо нашого брата!",
+                    Author = "Ragnar",
+                    Date = DateTime.Now.AddDays(-12)
+                },
+                new NewsItem
+                {
+                    Icon = "🎉",
+                    Title = "День святкування сім'ї!",
+                    Content = "Відбувся День святкування, де всі члени сім'ї зібралися разом. Чудові спогади, веселість та тісніші зв'язки між членами. Дякуємо всім за участь!",
+                    Author = "Eclipse",
+                    Date = DateTime.Now.AddDays(-15)
+                }
+            };
+        }
+    }
+
+    private void AddNews()
+    {
+        if (string.IsNullOrWhiteSpace(newNews.Title) || string.IsNullOrWhiteSpace(newNews.Content))
+        {
+            return;
+        }
+
+        newNews.Date = DateTime.Now;
+        if (string.IsNullOrWhiteSpace(newNews.Icon))
+            newNews.Icon = "📰";
+
+        newsItems.Insert(0, new NewsItem
+        {
+            Icon = newNews.Icon,
+            Title = newNews.Title,
+            Content = newNews.Content,
+            Author = newNews.Author ?? "Анонім",
+            Date = newNews.Date
+        });
+
+        newNews = new NewsItem();
+        StateHasChanged();
+    }
+
+    public class NewsItem
+    {
+        public string Icon { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Content { get; set; } = string.Empty;
+        public string Author { get; set; } = string.Empty;
+        public DateTime Date { get; set; } = DateTime.Now;
+    }
+}

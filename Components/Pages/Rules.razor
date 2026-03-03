@@ -1,0 +1,209 @@
+@page "/rules"
+
+<PageTitle>Правила сім'ї - Raven Family</PageTitle>
+
+<div class="content rules-container">
+    <h1 style="text-align: center; margin-top: 0;">📜 Правила Сім'ї Воронів 📜</h1>
+    <p style="text-align: center; color: rgba(232, 232, 232, 0.8); font-size: 1.1rem;">
+        Основи, на яких будується наша могутня сім'я
+    </p>
+
+    <!-- Форма для додавання нового правила -->
+    <div style="background: rgba(50, 20, 70, 0.5); border: 2px solid #8b3a8b; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
+        <h3 style="color: #ffd700; margin-top: 0;">✏️ Додати Нове Правило</h3>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #ddd;">Розділ</label>
+            <input type="text" class="form-control" @bind="newRule.Section" placeholder="Наприклад: Загальні Правила" />
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #ddd;">Текст Правила</label>
+            <textarea class="form-control" @bind="newRule.Text" placeholder="Введіть текст правила" style="min-height: 80px;"></textarea>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; color: #ddd;">Значок</label>
+            <input type="text" class="form-control" @bind="newRule.Icon" placeholder="Наприклад: ⚡" maxlength="2" />
+        </div>
+        <button class="btn btn-primary" @onclick="AddRule" style="width: 100%;">➕ Додати Правило</button>
+    </div>
+
+    <div class="rule-section">
+        <div class="rule-title">
+            <span class="rule-title-icon">⚡</span>
+            Загальні Правила
+        </div>
+        <div class="rule-content">
+            <ul class="rule-list">
+                <li><strong>Повага і честь</strong> - кожен учасник має право на повагу незалежно від рангу</li>
+                <li><strong>Дисципліна</strong> - дотримання правил є обов'язковим для всіх</li>
+                <li><strong>Конфіденційність</strong> - інформація про сім'ю залишається всередині</li>
+                <li><strong>Відданість</strong> - надійність перед сім'єю над усім іншим</li>
+                <li><strong>Справедливість</strong> - накази видаються справедливо і без упередження</li>
+                <li><strong>Командна робота</strong> - успіх сім'ї важливіший за особисті амбіції</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="rule-section">
+        <div class="rule-title">
+            <span class="rule-title-icon">❌</span>
+            Категорично Заборонено
+        </div>
+        <div class="rule-content">
+            <ul class="rule-list">
+                <li>Зрада і втеча з сім'ї без дозволу лідера</li>
+                <li>Публічне розголошення інформації про сім'ю</li>
+                <li>Насилля над члены сім'ї без причини</li>
+                <li>Крадіжка у членів сім'ї</li>
+                <li>Лжа перед лідеством</li>
+                <li>Допомога ворогам сім'ї</li>
+                <li>Вживання наркотичних речовин на території сім'ї</li>
+                <li>Сексуальні домагання або дискримінація</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="rule-section">
+        <div class="rule-title">
+            <span class="rule-title-icon">⚖️</span>
+            Система Покарань
+        </div>
+        <div class="rule-content">
+            <p style="margin-bottom: 1.5rem;">
+                Покарання визначаються у залежності від тяжкості порушення:
+            </p>
+            <ul class="rule-list">
+                <li><strong>Попередження:</strong> за дрібні порушення (2 попередження = понижение)</li>
+                <li><strong>Понижение рангу:</strong> за серйозніші порушення (мінус 1 ранг на місяць)</li>
+                <li><strong>Тимчасовий бан:</strong> за грубі порушення (від тижня до місяця)</li>
+                <li><strong>Постійне вилучення:</strong> за найсерйозніші порушення (видалення з сім'ї)</li>
+                <li><strong>Остаточне вислання:</strong> за предательство і зраду</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="rule-section">
+        <div class="rule-title">
+            <span class="rule-title-icon">🎯</span>
+            Вимоги для Вступу
+        </div>
+        <div class="rule-content">
+            <p style="margin-bottom: 1rem;">Щоб приєднатися до сім'ї Воронів, потрібно відповідати наступним вимогам:</p>
+            <ul class="rule-list">
+                <li>Вік від 16 років або старше</li>
+                <li>Розуміння та прийняття всіх правил сім'ї</li>
+                <li>Рекомендація від вже існуючого члена</li>
+                <li>Успішне пройдення вступного випробування (тривалість: 2 тижні)</li>
+                <li>Підтримка більшості офіцерів під час голосування</li>
+                <li>Готовність до довготривалої협 з сім'єю</li>
+                <li>Наявність стабільного інтернету та можливості спілкуватися</li>
+            </ul>
+            <p style="margin-top: 1.5rem; color: var(--accent-color);">
+                <strong>Процес вступу:</strong> Будь ласка, заповніть форму реєстрації на нашому сайті та чекайте розгляду вашої заявки.
+            </p>
+        </div>
+    </div>
+
+    <div class="rule-section">
+        <div class="rule-title">
+            <span class="rule-title-icon">🏆</span>
+            Система Рангів
+        </div>
+        <div class="rule-content">
+            <div style="margin-top: 1.5rem;">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div style="padding: 1rem; background: rgba(196, 30, 58, 0.2); border-radius: 8px;">
+                        <strong style="color: var(--accent-color);">👑 Лідер</strong>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Голова сім'ї, приймає всі ключові рішення</p>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(196, 30, 58, 0.2); border-radius: 8px;">
+                        <strong style="color: var(--accent-color);">🛡️ Адміністратор</strong>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Забезпечує порядок і управління</p>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(196, 30, 58, 0.2); border-radius: 8px;">
+                        <strong style="color: var(--accent-color);">⚔️ Офіцер</strong>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Старші члени з більшими правами</p>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(196, 30, 58, 0.2); border-radius: 8px;">
+                        <strong style="color: var(--accent-color);">🐦 Учасник</strong>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Повноправний член сім'ї</p>
+                    </div>
+                    <div style="padding: 1rem; background: rgba(196, 30, 58, 0.2); border-radius: 8px;">
+                        <strong style="color: var(--accent-color);">🌱 Новобранець</strong>
+                        <p style="font-size: 0.9rem; margin-top: 0.5rem;">Новий учасник на випробуванні</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="rule-section">
+        <div class="rule-title">
+            <span class="rule-title-icon">📢</span>
+            Комунікація та Активність
+        </div>
+        <div class="rule-content">
+            <ul class="rule-list">
+                <li>Участь у заходах сім'ї обов'язкова (мінімум раз на тиждень)</li>
+                <li>Реагувати на важливі повідомлення від лідера протягом 24 годин</li>
+                <li>Використовувати офіційні канали для спілкування</li>
+                <li>Інформувати лідера про тривалу відсутність</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Користувальницькі правила -->
+    @if (customRules.Count > 0)
+    {
+        <h2 style="margin-top: 3rem; color: #ffd700;">📝 Користувальницькі Правила</h2>
+        @foreach (var rule in customRules)
+        {
+            <div class="rule-section">
+                <div class="rule-title">
+                    <span class="rule-title-icon">@rule.Icon</span>
+                    @rule.Section
+                </div>
+                <div class="rule-content">
+                    <p>@rule.Text</p>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private List<Rule> customRules = new();
+    private Rule newRule = new();
+
+    protected override void OnInitialized()
+    {
+        customRules = new List<Rule>();
+    }
+
+    private void AddRule()
+    {
+        if (string.IsNullOrWhiteSpace(newRule.Section) || string.IsNullOrWhiteSpace(newRule.Text))
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(newRule.Icon))
+            newRule.Icon = "📋";
+
+        customRules.Add(new Rule
+        {
+            Section = newRule.Section,
+            Text = newRule.Text,
+            Icon = newRule.Icon
+        });
+
+        newRule = new Rule();
+        StateHasChanged();
+    }
+
+    public class Rule
+    {
+        public string Section { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+        public string Icon { get; set; } = string.Empty;
+    }
+}

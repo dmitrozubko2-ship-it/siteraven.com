@@ -1,0 +1,78 @@
+@page "/confirm-email"
+@using Raven_Family.Services
+@inject AuthService authService
+@inject NavigationManager navigationManager
+
+<PageTitle>Підтвердження Email - Сім'я Воронів</PageTitle>
+
+<div class="auth-container">
+    <div class="auth-card">
+        @if (isLoading)
+        {
+            <div style="text-align: center;">
+                <h3 style="margin-bottom: 1rem;">⏳ Підтвердження email...</h3>
+                <p>Будь ласка, зачекайте...</p>
+            </div>
+        }
+        else if (isSuccess)
+        {
+            <div style="text-align: center;">
+                <h3 style="color: #28a745; margin-bottom: 1rem;">✅ Email підтверджений!</h3>
+                <p style="margin-bottom: 2rem;">Вітаємо! Ваш email було успішно підтверджено.</p>
+                <p style="margin-bottom: 2rem;">Тепер ви можете увійти в свій акаунт.</p>
+                <a href="/login" class="btn btn-primary">Перейти до входу</a>
+            </div>
+        }
+        else
+        {
+            <div style="text-align: center;">
+                <h3 style="color: #dc3545; margin-bottom: 1rem;">❌ Помилка підтвердження</h3>
+                <p style="margin-bottom: 2rem;">@errorMessage</p>
+                <div>
+                    <a href="/register" class="btn btn-primary" style="margin-right: 0.5rem;">Спробувати знову</a>
+                    <a href="/" class="btn btn-secondary">На головну</a>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? Token { get; set; }
+
+    private bool isLoading = true;
+    private bool isSuccess = false;
+    private string errorMessage = "Невідомо розпізнана помилка. Спробуйте ще раз або скопіюйте посилання з листа.";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Delay(500); // Невеликої затримки для кращого UX
+
+        if (string.IsNullOrWhiteSpace(Token))
+        {
+            isLoading = false;
+            errorMessage = "Токен підтвердження не знайдений. Скопіюйте посилання з листа, який було відправлено на вашу email адресу.";
+            return;
+        }
+
+        try
+        {
+            if (authService.ConfirmEmail(Token))
+            {
+                isSuccess = true;
+                isLoading = false;
+            }
+            else
+            {
+                isLoading = false;
+                errorMessage = "Токен невалідний або вже використаний. Спробуйте зареєструватися ще раз.";
+            }
+        }
+        catch (Exception ex)
+        {
+            isLoading = false;
+            errorMessage = $"Сталася помилка: {ex.Message}";
+        }
+    }
+}

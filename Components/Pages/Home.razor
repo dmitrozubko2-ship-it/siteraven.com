@@ -1,0 +1,99 @@
+﻿@page "/"
+
+<PageTitle>Сім'я Воронів</PageTitle>
+
+<div style="text-align: center; padding: 3rem 0;">
+    <h1 style="font-size: 4rem; margin-bottom: 1rem;">🐦 Добро Пожалувати до Сім'ї Воронів 🐦</h1>
+    <p style="font-size: 1.3rem; margin-bottom: 2rem; color: rgba(232, 232, 232, 0.9);">
+        Чудова подорож воронів, мудрості та сімейних зв'язків
+    </p>
+    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+        <a href="family" class="btn btn-primary">
+            Дізнатися про нашу сім'ю
+        </a>
+        <a href="gallery" class="btn btn-primary" style="background: rgba(196, 30, 58, 0.7); border: 2px solid var(--accent-color);">
+            Переглянути галерею
+        </a>
+        <a href="news" class="btn btn-primary" style="background: rgba(196, 30, 58, 0.7); border: 2px solid var(--accent-color);">
+            📰 Новини
+        </a>
+        <a href="contact" class="btn btn-primary" style="background: rgba(196, 30, 58, 0.7); border: 2px solid var(--accent-color);">
+            Зв'язатися з нами
+        </a>
+        <a href="register" class="btn btn-success" style="font-weight: bold;">
+            ➕ Приєднатися до сім'ї
+        </a>
+    </div>
+</div>
+
+<!-- Блок Досягнень -->
+<AchievementsBlock 
+    ParticipantsCount="42" 
+    VictoriesCount="128" 
+    YearFounded="2021" 
+    RatingScore="4.9" />
+
+<!-- Кнопки для навігації -->
+<div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin: 3rem 0;">
+    <a href="members" class="btn btn-outline-primary">
+        👥 Члени сім'ї
+    </a>
+    <a href="rules" class="btn btn-outline-primary">
+        📜 Правила
+    </a>
+    <a href="news" class="btn btn-outline-primary">
+        📰 Останні новини
+    </a>
+</div>
+
+<div style="margin-top: 4rem;">
+    <div class="row" style="gap: 2rem;">
+        <div class="col-md-6" style="margin-bottom: 2rem;">
+            <div class="card">
+                <div class="card-body" style="padding: 2rem;">
+                    <h3 style="margin-top: 0;">✨ Величні створіння</h3>
+                    <p>
+                        Ворони - одні з найрозумніших птахів на Землі. Відомі своїми здібностями до розв'язування проблем 
+                        та складними соціальними структурами, вони символізують мудрість і таємницю в багатьох культурах.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6" style="margin-bottom: 2rem;">
+            <div class="card">
+                <div class="card-body" style="padding: 2rem;">
+                    <h3 style="margin-top: 0;">🌍 Сімейні зв'язки</h3>
+                    <p>
+                        Дізнайтеся про неймовірні зв'язки в межах нашої сім'ї воронів. Від складних ієрархій до 
+                        прекрасних шлюбних ритуалів, дізнайтеся, як ці чудові птахи живуть та розвиваються разом.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6" style="margin-bottom: 2rem;">
+            <div class="card">
+                <div class="card-body" style="padding: 2rem;">
+                    <h3 style="margin-top: 0;">📚 Давня мудрість</h3>
+                    <p>
+                        Вороні грали значну роль у міфології та фольклорі впродовж людської історії. 
+                        Дослідіть символізм та легенди, пов'язані з цими чудовими птахами.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6" style="margin-bottom: 2rem;">
+            <div class="card">
+                <div class="card-body" style="padding: 2rem;">
+                    <h3 style="margin-top: 0;">🎨 Приєднайтеся до нас</h3>
+                    <p>
+                        Незалежно від того, чи ви любитель птахів, природи чи просто цікавитеся дикою природою, 
+                        дослідіть наші інтерактивні сторінки, щоб дізнатися більше про чудовий світ воронів.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Блок Відгуків -->
+<ReviewsCarousel />

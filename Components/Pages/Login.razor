@@ -1,0 +1,105 @@
+@page "/login"
+@using Raven_Family.Services
+@inject AuthService authService
+@inject NavigationManager navigationManager
+
+<PageTitle>Вхід - Сім'я Воронів</PageTitle>
+
+<div class="auth-container">
+    <div class="auth-card">
+        <h2 class="auth-title">🐦 Вхід в акаунт</h2>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        <form @onsubmit="HandleLogin">
+            <div class="mb-3">
+                <label class="form-label">Ім'я користувача або Email</label>
+                <input type="text" class="form-control" @bind="username" placeholder="Введіть ім'я або email" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Пароль</label>
+                <input type="password" class="form-control" @bind="password" placeholder="Введіть пароль" required />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Увійти</button>
+        </form>
+
+        <div class="auth-link">
+            Немає акаунту? <a href="/register">Зареєструватися</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string username = "";
+    private string password = "";
+    private string errorMessage = "";
+
+    private void HandleLogin()
+    {
+        errorMessage = "";
+
+        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+        {
+            errorMessage = "Будь ласка, заповніть все поля!";
+            return;
+        }
+
+        var (success, message) = authService.LoginWithMessage(username, password);
+
+        if (success)
+        {
+            navigationManager.NavigateTo("/", forceLoad: true);
+        }
+        else
+        {
+            errorMessage = message;
+            password = "";
+        }
+    }
+}
+
+<style>
+    .auth-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 60vh;
+        padding: 2rem 1rem;
+    }
+
+    .auth-card {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(196, 30, 58, 0.5);
+        border-radius: 12px;
+        padding: 2rem;
+        width: 100%;
+        max-width: 400px;
+        backdrop-filter: blur(10px);
+    }
+
+    .auth-title {
+        text-align: center;
+        color: var(--accent-color);
+        margin-bottom: 2rem;
+    }
+
+    .auth-link {
+        text-align: center;
+        margin-top: 1rem;
+        font-size: 0.9rem;
+    }
+
+    .auth-link a {
+        color: var(--accent-color);
+        text-decoration: none;
+    }
+
+    .auth-link a:hover {
+        text-decoration: underline;
+    }
+</style>

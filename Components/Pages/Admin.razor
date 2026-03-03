@@ -1,0 +1,2108 @@
+@page "/admin"
+@using Raven_Family.Services
+@inject AuthService authService
+@inject NavigationManager navigationManager
+
+<PageTitle>Адмін панель - Сім'я Воронів</PageTitle>
+
+@if (!authService.IsLoggedIn())
+{
+    <div class="alert alert-warning">
+        <p>Будь ласка, <a href="/login">увійдіть</a> в свій акаунт.</p>
+    </div>
+}
+else if (!authService.IsAdmin())
+{
+    <div class="alert alert-danger">
+        <p>У вас немає доступу до адмін панелі!</p>
+    </div>
+}
+else
+{
+    <div class="admin-container">
+        <h1 class="admin-title">⚙️ Адмін панель</h1>
+
+        <div class="welcome-box">
+            <div>
+                @{
+                    var currentUser = authService.GetCurrentUser();
+                    if (currentUser != null)
+                    {
+                        <p>Ласкаво просимо, <strong>@currentUser.Username</strong>!</p>
+                        <small>Роль: <span class="role-badge">@authService.GetRoleDisplayName(authService.GetCurrentUserRole())</span></small>
+                        @if (authService.IsTechAdmin())
+                        {
+                            <small style="color: #FFD700; margin-left: 1rem;">👑 ПОВНІ ПРАВА</small>
+                        }
+                    }
+                }
+            </div>
+            <button class="btn btn-danger btn-sm" @onclick="HandleLogout">Вийти</button>
+        </div>
+
+        <div class="admin-tabs">
+            <button class="tab-button @(activeTab == "dashboard" ? "active" : "")" @onclick="SetTabDashboard">
+                📊 Панель керування
+            </button>
+            <button class="tab-button @(activeTab == "users" ? "active" : "")" @onclick="SetTabUsers">
+                👥 Користувачі
+            </button>
+            @if (authService.CanManageRoles())
+            {
+                <button class="tab-button @(activeTab == "roles" ? "active" : "")" @onclick="SetTabRoles">
+                    🎖️ Управління ролями
+                </button>
+            }
+            <button class="tab-button @(activeTab == "news" ? "active" : "")" @onclick="SetTabNews">
+                📰 Новини
+            </button>
+            <button class="tab-button @(activeTab == "members" ? "active" : "")" @onclick="SetTabMembers">
+                👥 Члени сім'ї
+            </button>
+            <button class="tab-button @(activeTab == "rulesMgmt" ? "active" : "")" @onclick="SetTabRules">
+                📜 Правила
+            </button>
+            @if (authService.IsTechAdmin())
+            {
+                <button class="tab-button @(activeTab == "activity" ? "active" : "")" @onclick="SetTabActivity">
+                    📋 Активність
+                </button>
+                <button class="tab-button @(activeTab == "settings" ? "active" : "")" @onclick="SetTabSettings">
+                    ⚙️ Налаштування
+                </button>
+                <button class="tab-button @(activeTab == "logs" ? "active" : "")" @onclick="SetTabLogs">
+                    📝 Логи
+                </button>
+                <button class="tab-button @(activeTab == "security" ? "active" : "")" @onclick="SetTabSecurity">
+                    🔒 Безпека
+                </button>
+            }
+        </div>
+
+        @if (activeTab == "dashboard")
+        {
+            <div class="tab-content">
+                <h2>Статистика системи</h2>
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <h3>Всього користувачів</h3>
+                        <p class="stat-number">@authService.GetAllUsers().Count</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Адміністраторів</h3>
+                        <p class="stat-number">@authService.GetAllUsers().Count(u => u.IsAdmin)</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Лідерів</h3>
+                        <p class="stat-number">@authService.GetAllUsers().Count(u => u.Role == UserRole.Лідер)</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Членів сім'ї</h3>
+                        <p class="stat-number">@authService.GetAllUsers().Count(u => u.Role == UserRole.УчасникСім_ї)</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Старший склад</h3>
+                        <p class="stat-number">@authService.GetAllUsers().Count(u => u.Role == UserRole.СтаршийСкладСім_ї)</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Заступників</h3>
+                        <p class="stat-number">@authService.GetAllUsers().Count(u => u.Role == UserRole.Заступник)</p>
+                    </div>
+                </div>
+
+                <div class="stats-section">
+                    <div class="info-card">
+                        <h3>📋 Системна інформація</h3>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <strong>Версія системи:</strong>
+                                <p>1.0.0</p>
+                            </div>
+                            <div class="info-item">
+                                <strong>Остання активність:</strong>
+                                <p>@DateTime.Now.ToString("dd.MM.yyyy HH:mm:ss")</p>
+                            </div>
+                            <div class="info-item">
+                                <strong>Ваша роль:</strong>
+                                <p>@authService.GetRoleDisplayName(authService.GetCurrentUserRole())</p>
+                            </div>
+                            <div class="info-item">
+                                <strong>Статус:</strong>
+                                <p><span class="badge bg-success">Активна</span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3>👥 Розподіл ролей</h3>
+                        <div class="role-distribution">
+                            <div class="dist-item">
+                                <span>Учасники</span>
+                                <div class="progress" style="width: 100%;">
+                                    <div class="progress-bar" style="width: @GetPercentage(authService.GetAllUsers().Count(u => u.Role == UserRole.УчасникСім_ї))%; background-color: #0f3460;">
+                                        @authService.GetAllUsers().Count(u => u.Role == UserRole.УчасникСім_ї)
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dist-item">
+                                <span>Старший склад</span>
+                                <div class="progress">
+                                    <div class="progress-bar" style="width: @GetPercentage(authService.GetAllUsers().Count(u => u.Role == UserRole.СтаршийСкладСім_ї))%; background-color: #2c2c54;">
+                                        @authService.GetAllUsers().Count(u => u.Role == UserRole.СтаршийСкладСім_ї)
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dist-item">
+                                <span>Заступники</span>
+                                <div class="progress">
+                                    <div class="progress-bar" style="width: @GetPercentage(authService.GetAllUsers().Count(u => u.Role == UserRole.Заступник))%; background-color: #c41e3a;">
+                                        @authService.GetAllUsers().Count(u => u.Role == UserRole.Заступник)
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="dist-item">
+                                <span>Лідери</span>
+                                <div class="progress">
+                                    <div class="progress-bar" style="width: @GetPercentage(authService.GetAllUsers().Count(u => u.Role == UserRole.Лідер))%; background-color: #FFD700;">
+                                        @authService.GetAllUsers().Count(u => u.Role == UserRole.Лідер)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (activeTab == "news")
+        {
+            <div class="tab-content">
+                <div class="management-header">
+                    <h3>📰 Керування новинами</h3>
+                    <button class="btn btn-success btn-sm" @onclick="OpenAddNewsForm">
+                        ➕ Нова новина
+                    </button>
+                </div>
+
+                @if (editingNews != null)
+                {
+                    <div class="edit-form-container">
+                        <div class="edit-form-card">
+                            <h4>@(editingNews.Id == 0 ? "Додати нову новину" : "Редагувати новину")</h4>
+                            <div class="form-group">
+                                <label>Іконка/Емодзі:</label>
+                                <input type="text" class="form-control" @bind="editingNews.Icon" placeholder="Напр.: 👥 або 🎮" maxlength="2" />
+                            </div>
+                            <div class="form-group">
+                                <label>Заголовок:</label>
+                                <input type="text" class="form-control" @bind="editingNews.Title" placeholder="Введіть заголовок новини" />
+                            </div>
+                            <div class="form-group">
+                                <label>Вміст:</label>
+                                <textarea class="form-control" @bind="editingNews.Content" rows="4" placeholder="Введіть вміст новини"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Автор:</label>
+                                <input type="text" class="form-control" @bind="editingNews.Author" placeholder="Ім'я автора" />
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-success" @onclick="SaveNews">💾 Зберегти</button>
+                                <button class="btn btn-secondary" @onclick="CancelNewsEdit">❌ Скасувати</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="news-management-list">
+                    @foreach (var news in newsList)
+                    {
+                        <div class="news-management-card">
+                            <div class="news-card-header">
+                                <div>
+                                    <span class="news-icon">@news.Icon</span>
+                                    <strong>@news.Title</strong>
+                                </div>
+                                <span class="news-date">@news.Date.ToString("dd.MM.yyyy HH:mm")</span>
+                            </div>
+                            <div class="news-card-body">
+                                <p>@news.Content</p>
+                                <small style="color: rgba(232, 232, 232, 0.6);">Автор: @news.Author</small>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-sm btn-info" @onclick="@(() => EditNews(news))">✏️ Редагувати</button>
+                                <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteNews(news.Id))">🗑️ Видалити</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (newsList.Count == 0)
+                {
+                    <div class="empty-state">
+                        <p>Новин поки немає. Додайте першу новину!</p>
+                    </div>
+                }
+            </div>
+        }
+        else if (activeTab == "members")
+        {
+            <div class="tab-content">
+                <div class="management-header">
+                    <h3>👥 Керування членами сім'ї</h3>
+                    <button class="btn btn-success btn-sm" @onclick="OpenAddMemberForm">
+                        ➕ Новий член
+                    </button>
+                </div>
+
+                @if (editingMember != null)
+                {
+                    <div class="edit-form-container">
+                        <div class="edit-form-card">
+                            <h4>@(editingMember.Id == 0 ? "Додати нового члена" : "Редагувати члена")</h4>
+                            <div class="form-group">
+                                <label>Нікнейм:</label>
+                                <input type="text" class="form-control" @bind="editingMember.Nickname" placeholder="Введіть нікнейм" />
+                            </div>
+                            <div class="form-group">
+                                <label>Ранг:</label>
+                                <select class="form-control" @bind="editingMember.Rank">
+                                    <option value="">-- Виберіть ранг --</option>
+                                    <option value="Leader">👑 Лідер</option>
+                                    <option value="Admin">🛡️ Адміністратор</option>
+                                    <option value="Officer">⚔️ Офіцер</option>
+                                    <option value="Member">🐦 Учасник</option>
+                                    <option value="Recruit">🌱 Новобранець</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>URL аватара:</label>
+                                <input type="url" class="form-control" @bind="editingMember.AvatarUrl" placeholder="https://..." />
+                            </div>
+                            <div class="form-group">
+                                <label>Дата вступу:</label>
+                                <input type="date" class="form-control" @bind="editingMember.JoinedDate" />
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-success" @onclick="SaveMember">💾 Зберегти</button>
+                                <button class="btn btn-secondary" @onclick="CancelMemberEdit">❌ Скасувати</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="members-management-grid">
+                    @foreach (var member in membersList)
+                    {
+                        <div class="member-management-card">
+                            <img src="@member.AvatarUrl" alt="@member.Nickname" class="member-avatar-small" />
+                            <div class="member-info">
+                                <strong>@member.Nickname</strong>
+                                <div class="member-rank-badge">@GetRankIcon(member.Rank) @member.Rank</div>
+                                <small>Вступив: @member.JoinedDate.ToString("dd.MM.yyyy")</small>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="btn btn-sm btn-info" @onclick="@(() => EditMember(member))">✏️</button>
+                                <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteMember(member.Id))">🗑️</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (membersList.Count == 0)
+                {
+                    <div class="empty-state">
+                        <p>Членів немає. Додайте першого члена!</p>
+                    </div>
+                }
+            </div>
+        }
+        else if (activeTab == "rulesMgmt")
+        {
+            <div class="tab-content">
+                <div class="management-header">
+                    <h3>📜 Керування правилами</h3>
+                    <button class="btn btn-success btn-sm" @onclick="OpenAddRuleForm">
+                        ➕ Нове правило
+                    </button>
+                </div>
+
+                @if (editingRule != null)
+                {
+                    <div class="edit-form-container">
+                        <div class="edit-form-card">
+                            <h4>@(editingRule.Id == 0 ? "Додати нове правило" : "Редагувати правило")</h4>
+                            <div class="form-group">
+                                <label>Категорія:</label>
+                                <select class="form-control" @bind="editingRule.Category">
+                                    <option value="">-- Виберіть категорію --</option>
+                                    <option value="Загальні">⚡ Загальні правила</option>
+                                    <option value="Заборонено">❌ Категорично заборонено</option>
+                                    <option value="Покарання">⚖️ Система покарань</option>
+                                    <option value="Вимоги">🎯 Вимоги для вступу</option>
+                                    <option value="Ранги">🏆 Система рангів</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Заголовок:</label>
+                                <input type="text" class="form-control" @bind="editingRule.Title" placeholder="Введіть заголовок" />
+                            </div>
+                            <div class="form-group">
+                                <label>Вміст:</label>
+                                <textarea class="form-control" @bind="editingRule.Content" rows="4" placeholder="Введіть вміст правила"></textarea>
+                            </div>
+                            <div class="button-group">
+                                <button class="btn btn-success" @onclick="SaveRule">💾 Зберегти</button>
+                                <button class="btn btn-secondary" @onclick="CancelRuleEdit">❌ Скасувати</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="rules-management-container">
+                    @{
+                        var groupedRules = rulesList.GroupBy(r => r.Category);
+                        @foreach (var group in groupedRules)
+                        {
+                            <div class="rules-section-management">
+                                <div class="section-title">
+                                    <strong>@group.Key</strong>
+                                    <span class="rule-count">(@group.Count())</span>
+                                </div>
+                                <div class="rules-list-management">
+                                    @foreach (var rule in group)
+                                    {
+                                        <div class="rule-item-management">
+                                            <div>
+                                                <strong>@rule.Title</strong>
+                                                <p>@rule.Content</p>
+                                            </div>
+                                            <div class="action-buttons">
+                                                <button class="btn btn-sm btn-info" @onclick="@(() => EditRule(rule))">✏️</button>
+                                                <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteRule(rule.Id))">🗑️</button>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+
+                @if (rulesList.Count == 0)
+                {
+                    <div class="empty-state">
+                        <p>Правил немає. Додайте першого правила!</p>
+                    </div>
+                }
+            </div>
+        }
+        else if (activeTab == "users")
+        {
+            <div class="tab-content">
+                <div class="users-header">
+                    <h3>Керування користувачами</h3>
+                    <input type="text" class="form-control search-input" placeholder="🔍 Пошук по ім'ю або email..." @bind="searchQuery" />
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-dark">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Ім'я користувача</th>
+                                <th>Email</th>
+                                <th>Роль</th>
+                                <th>Статус</th>
+                                <th>Дата реєстрації</th>
+                                <th>Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in FilteredUsers())
+                            {
+                                <tr>
+                                    <td>@user.Id</td>
+                                    <td><strong>@user.Username</strong></td>
+                                    <td>@user.Email</td>
+                                    <td>
+                                        <span class="role-badge">@authService.GetRoleDisplayName(user.Role)</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge @(user.IsAdmin ? "bg-danger" : "bg-secondary")">
+                                            @(user.IsAdmin ? "Адмін" : "Користувач")
+                                        </span>
+                                    </td>
+                                    <td>@user.CreatedAt.ToString("dd.MM.yyyy")</td>
+                                    <td>
+                                        @if (user.Id != authService.GetCurrentUser().Id)
+                                        {
+                                            <div class="action-buttons">
+                                                <button class="btn btn-sm btn-info" @onclick="@(() => EditUser(user))">
+                                                    ✏️
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" @onclick="@(() => DeleteUserConfirm(user))">
+                                                    🗑️
+                                                </button>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <small style="color: #999;">Це ви</small>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (editingUser != null)
+                {
+                    <div class="edit-modal">
+                        <div class="edit-card">
+                            <h4>Редагувати користувача</h4>
+                            <div class="edit-form">
+                                <div class="form-group">
+                                    <label>Ім'я користувача:</label>
+                                    <input type="text" class="form-control" @bind="editingUser.Username" />
+                                </div>
+                                <div class="form-group">
+                                    <label>Email:</label>
+                                    <input type="email" class="form-control" @bind="editingUser.Email" />
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        <input type="checkbox" @bind="editingUser.IsAdmin" />
+                                        Адміністратор
+                                    </label>
+                                </div>
+                                <div class="button-group">
+                                    <button class="btn btn-success" @onclick="SaveUser">💾 Зберегти</button>
+                                    <button class="btn btn-secondary" @onclick="CancelEdit">❌ Відмінити</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else if (activeTab == "roles" && authService.CanManageRoles())
+        {
+            <div class="tab-content">
+                <h3>🎖️ Управління ролями користувачів</h3>
+                <div class="roles-container">
+                    @foreach (var user in authService.GetAllUsers())
+                    {
+                        <div class="role-card">
+                            <div class="role-card-header">
+                                <h4>@user.Username</h4>
+                                <small>@user.Email</small>
+                            </div>
+                            <div class="role-card-body">
+                                <p><strong>Поточна роль:</strong> <span class="current-role">@authService.GetRoleDisplayName(user.Role)</span></p>
+                                @if (user.Id != authService.GetCurrentUser().Id)
+                                {
+                                    <div style="margin-top: 1rem;">
+                                        <label><strong>Змінити роль на:</strong></label>
+                                        <div class="role-buttons">
+                                            <button class="role-btn @(user.Role == UserRole.УчасникСім_ї ? "active" : "")" 
+                                                    @onclick="@(() => ChangeRole(user.Id, UserRole.УчасникСім_ї))">
+                                                👤 Участник сім'ї
+                                            </button>
+                                            @if (authService.CanPromoteToSenior())
+                                            {
+                                                <button class="role-btn @(user.Role == UserRole.СтаршийСкладСім_ї ? "active" : "")" 
+                                                        @onclick="@(() => ChangeRole(user.Id, UserRole.СтаршийСкладСім_ї))">
+                                                    🧑 Старший склад
+                                                </button>
+                                            }
+                                            @if (authService.CanPromoteToDeputy())
+                                            {
+                                                <button class="role-btn @(user.Role == UserRole.Заступник ? "active" : "")" 
+                                                        @onclick="@(() => ChangeRole(user.Id, UserRole.Заступник))">
+                                                    🎩 Заступник
+                                                </button>
+                                            }
+                                            @if (authService.CanPromoteToLeader())
+                                            {
+                                                <button class="role-btn @(user.Role == UserRole.Лідер ? "active" : "")" 
+                                                        @onclick="@(() => ChangeRole(user.Id, UserRole.Лідер))">
+                                                    👑 Лідер
+                                                </button>
+                                                <button class="role-btn @(user.Role == UserRole.ТехАдмін ? "active" : "")" 
+                                                        @onclick="@(() => ChangeRole(user.Id, UserRole.ТехАдмін))">
+                                                    🔧 Тех адмін
+                                                </button>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <small style="color: #999; margin-top: 1rem; display: block;">Ви не можете змінити власну роль</small>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else if (activeTab == "activity" && authService.IsTechAdmin())
+        {
+            <div class="tab-content">
+                <h3>📋 Активність системи</h3>
+                <div class="activity-section">
+                    <div class="activity-card">
+                        <h4>🔐 Входи в акаунт</h4>
+                        <div class="activity-list">
+                            @foreach (var user in authService.GetAllUsers().OrderByDescending(u => u.CreatedAt).Take(10))
+                            {
+                                <div class="activity-item">
+                                    <span class="time">@user.CreatedAt.ToString("dd.MM.yyyy HH:mm")</span>
+                                    <span class="action">Користувач <strong>@user.Username</strong> зареєстрований</span>
+                                    <span class="badge bg-info">@authService.GetRoleDisplayName(user.Role)</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="activity-card">
+                        <h4>👥 Останні дії</h4>
+                        <div class="activity-list">
+                            <div class="activity-item">
+                                <span class="time">Зараз</span>
+                                <span class="action">Ви переглядаєте адмін панель</span>
+                                <span class="badge bg-success">Активно</span>
+                            </div>
+                            <div class="activity-item">
+                                <span class="time">Вчора</span>
+                                <span class="action">Система запущена</span>
+                                <span class="badge bg-secondary">Завершено</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (activeTab == "settings" && authService.IsTechAdmin())
+        {
+            <div class="tab-content">
+                <h3>⚙️ Налаштування системи</h3>
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <h4>🔒 Безпека</h4>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" checked />
+                                HTTPS вкл.
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" checked />
+                                Двофакторна аутентифікація
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>Мінімальна довжина пароля (4-20):</label>
+                            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                                <input type="number" @bind="newPasswordLength" min="4" max="20" class="form-control" style="max-width: 100px;" />
+                                <button class="btn btn-sm btn-primary" @onclick="UpdatePasswordLength">Застосувати</button>
+                            </div>
+                            <small style="color: #aaa;">Поточне значення: @authService.GetMinimumPasswordLength() символів</small>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h4>📧 Сповіщення</h4>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" checked />
+                                Email сповіщення про реєстрацію
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" checked />
+                                Сповіщення про нові ролі
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h4>🗄️ База даних</h4>
+                        <div class="setting-item">
+                            <button class="btn btn-info btn-sm">💾 Резервна копія</button>
+                        </div>
+                        <div class="setting-item">
+                            <button class="btn btn-warning btn-sm">🔄 Відновити</button>
+                        </div>
+                        <div class="setting-item">
+                            <button class="btn btn-danger btn-sm">🗑️ Очистити логи</button>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <h4>📥 Експорт даних</h4>
+                        <div class="setting-item">
+                            <button class="btn btn-success btn-sm" @onclick="ExportUsers">📄 Експортувати CSV (користувачі)</button>
+                        </div>
+                        <div class="setting-item">
+                            <button class="btn btn-success btn-sm" @onclick="ExportStatistics">📊 Експортувати JSON (статистика)</button>
+                        </div>
+                        <div class="setting-item">
+                            <button class="btn btn-success btn-sm" @onclick="ExportAllUsers">👥 Експортувати JSON (всі користувачі)</button>
+                        </div>
+                        @if (!string.IsNullOrEmpty(exportMessage))
+                        {
+                            <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(196, 30, 58, 0.2); border-radius: 4px; color: #fff;">
+                                @exportMessage
+                            </div>
+                        }
+                    </div>
+
+                    <div class="settings-card">
+                        <h4>ℹ️ Інформація про систему</h4>
+                        <div class="info-list">
+                            <div>.NET версія: 10.0</div>
+                            <div>C# версія: 14.0</div>
+                            <div>Платформа: Blazor Server</div>
+                            <div>ОС: @GetOperatingSystem()</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (activeTab == "logs" && authService.IsTechAdmin())
+        {
+            <div class="tab-content">
+                <h3>📝 Логи системи</h3>
+                <div class="logs-section">
+                    <div class="logs-filter">
+                        <input type="text" class="form-control search-input" placeholder="🔍 Пошук в логах..." />
+                        <select class="form-control search-input" style="max-width: 150px;">
+                            <option>Всі типи</option>
+                            <option>Вхід</option>
+                            <option>Вихід</option>
+                            <option>Помилка</option>
+                            <option>Попередження</option>
+                        </select>
+                    </div>
+                    <div class="logs-list">
+                        <div class="log-item log-info">
+                            <span class="log-time">17:45:32</span>
+                            <span class="log-type">Вхід</span>
+                            <span class="log-message">Користувач admin увійшов у систему</span>
+                        </div>
+                        <div class="log-item log-success">
+                            <span class="log-time">17:42:10</span>
+                            <span class="log-type">Успіх</span>
+                            <span class="log-message">Заявка від NewPlayer успішно розпрацована</span>
+                        </div>
+                        <div class="log-item log-warning">
+                            <span class="log-time">17:35:45</span>
+                            <span class="log-type">Попередження</span>
+                            <span class="log-message">Невдала спроба входу з IP: 192.168.1.1</span>
+                        </div>
+                        <div class="log-item log-error">
+                            <span class="log-time">17:20:15</span>
+                            <span class="log-type">Помилка</span>
+                            <span class="log-message">Discord webhook помилка: перевірте URL</span>
+                        </div>
+                        <div class="log-item log-info">
+                            <span class="log-time">16:55:00</span>
+                            <span class="log-type">Система</span>
+                            <span class="log-message">Резервна копія БД успішно створена</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (activeTab == "security" && authService.IsTechAdmin())
+        {
+            <div class="tab-content">
+                <h3>🔒 Налаштування безпеки</h3>
+                <div class="security-grid">
+                    <div class="security-card">
+                        <h4>🔐 Активні сесії</h4>
+                        <div class="session-list">
+                            <div class="session-item">
+                                <div class="session-info">
+                                    @{
+                                        var currUser = authService.GetCurrentUser();
+                                        if (currUser != null)
+                                        {
+                                            <strong>@currUser.Username</strong>
+                                            <span class="session-role">@authService.GetRoleDisplayName(authService.GetCurrentUserRole())</span>
+                                        }
+                                    }
+                                </div>
+                                <div class="session-details">
+                                    <small>IP: 192.168.1.1</small>
+                                    <small>Браузер: Chrome</small>
+                                </div>
+                                <span class="session-badge badge bg-success">Активна</span>
+                            </div>
+                            <div class="session-item">
+                                <div class="session-info">
+                                    <strong>admin</strong>
+                                    <span class="session-role">Лідер</span>
+                                </div>
+                                <div class="session-details">
+                                    <small>IP: 192.168.1.15</small>
+                                    <small>Браузер: Firefox</small>
+                                </div>
+                                <span class="session-badge badge bg-warning">Неактивна (5 хв)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="security-card">
+                        <h4>🚨 Спроби входу</h4>
+                        <div class="attempts-list">
+                            <div class="attempt-item success">
+                                <span>✓ Успішно:</span>
+                                <strong>1,245</strong>
+                            </div>
+                            <div class="attempt-item failed">
+                                <span>✗ Невдала:</span>
+                                <strong>23</strong>
+                            </div>
+                            <div class="attempt-item blocked">
+                                <span>🚫 Заблоковано:</span>
+                                <strong>5</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="security-card">
+                        <h4>⚠️ Дозволи та обмеження</h4>
+                        <div class="permission-item">
+                            <label>
+                                <input type="checkbox" checked />
+                                Вимагати 2FA для адмінів
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <label>
+                                <input type="checkbox" checked />
+                                Блокувати при частих невдалих спробах
+                            </label>
+                        </div>
+                        <div class="permission-item">
+                            <label>
+                                <input type="checkbox" />
+                                Білий список IP адрес
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="security-card">
+                        <h4>🔑 Інші дії безпеки</h4>
+                        <button class="btn btn-warning btn-sm btn-block">🔄 Скинути всі пароли</button>
+                        <button class="btn btn-danger btn-sm btn-block" style="margin-top: 0.5rem;">🚫 Завершити всі сесії</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private string activeTab = "dashboard";
+    private User? editingUser;
+    private string searchQuery = "";
+    private int newPasswordLength = 6;
+    private string exportMessage = "";
+
+    // Новини
+    private List<NewsItem> newsList = new();
+    private NewsItem? editingNews;
+
+    // Члени
+    private List<FamilyMember> membersList = new();
+    private FamilyMember? editingMember;
+
+    // Правила
+    private List<RuleItem> rulesList = new();
+    private RuleItem? editingRule;
+
+    protected override void OnInitialized()
+    {
+        // Демонстраційні новини
+        newsList = new List<NewsItem>
+        {
+            new NewsItem
+            {
+                Id = 1,
+                Icon = "👥",
+                Title = "Новий учасник приєднався до сім'ї!",
+                Content = "Рідкісна честь прийняти нового члена нашої сім'ї. Добро пожалувати, 'Phoenix'! Ми сподіваємось, що ти будеш гідним членом нашого братства.",
+                Author = "Ragnar",
+                Date = DateTime.Now.AddDays(-1)
+            },
+            new NewsItem
+            {
+                Id = 2,
+                Icon = "🎮",
+                Title = "Великий турнір почнеться наступного тижня!",
+                Content = "Всі членів сім'ї запрошуються брати участь у великому турнірі. Переможець отримає спеціальний титул і винагороду.",
+                Author = "ShadowRaven",
+                Date = DateTime.Now.AddDays(-2)
+            }
+        };
+
+        // Демонстраційні члени
+        membersList = new List<FamilyMember>
+        {
+            new FamilyMember { Id = 1, Nickname = "Ragnar", Rank = "Leader", AvatarUrl = "https://via.placeholder.com/100?text=Ragnar", JoinedDate = new DateTime(2021, 1, 15) },
+            new FamilyMember { Id = 2, Nickname = "ShadowRaven", Rank = "Admin", AvatarUrl = "https://via.placeholder.com/100?text=Shadow", JoinedDate = new DateTime(2021, 3, 20) },
+            new FamilyMember { Id = 3, Nickname = "NightWing", Rank = "Officer", AvatarUrl = "https://via.placeholder.com/100?text=Night", JoinedDate = new DateTime(2021, 6, 10) }
+        };
+
+        // Демонстраційні правила
+        rulesList = new List<RuleItem>
+        {
+            new RuleItem { Id = 1, Category = "Загальні", Title = "Повага і честь", Content = "кожен учасник має право на повагу незалежно від рангу" },
+            new RuleItem { Id = 2, Category = "Загальні", Title = "Дисципліна", Content = "дотримання правил є обов'язковим для всіх" },
+            new RuleItem { Id = 3, Category = "Заборонено", Title = "Зрада", Content = "Зрада і втеча з сім'ї без дозволу лідера" },
+            new RuleItem { Id = 4, Category = "Покарання", Title = "Попередження", Content = "за дрібні порушення (2 попередження = понижение)" }
+        };
+    }
+
+    private void SetTabDashboard() => activeTab = "dashboard";
+    private void SetTabUsers() => activeTab = "users";
+    private void SetTabRoles() => activeTab = "roles";
+    private void SetTabNews() => activeTab = "news";
+    private void SetTabMembers() => activeTab = "members";
+    private void SetTabRules() => activeTab = "rulesMgmt";
+    private void SetTabActivity() => activeTab = "activity";
+    private void SetTabSettings() => activeTab = "settings";
+    private void SetTabLogs() => activeTab = "logs";
+    private void SetTabSecurity() => activeTab = "security";
+
+    private void HandleLogout()
+    {
+        authService.Logout();
+        navigationManager.NavigateTo("/", forceLoad: true);
+    }
+
+    private List<User> FilteredUsers()
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery))
+            return authService.GetAllUsers();
+
+        var query = searchQuery.ToLower();
+        return authService.GetAllUsers()
+            .Where(u => u.Username.ToLower().Contains(query) || u.Email.ToLower().Contains(query))
+            .ToList();
+    }    private void EditUser(User user)
+    {
+        editingUser = new User
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            IsAdmin = user.IsAdmin,
+            Password = user.Password,
+            Role = user.Role,
+            CreatedAt = user.CreatedAt
+        };
+    }
+
+    private void SaveUser()
+    {
+        if (editingUser != null)
+        {
+            var user = authService.GetAllUsers().FirstOrDefault(u => u.Id == editingUser.Id);
+            if (user != null)
+            {
+                user.Username = editingUser.Username;
+                user.Email = editingUser.Email;
+                user.IsAdmin = editingUser.IsAdmin;
+            }
+        }
+        CancelEdit();
+    }
+
+    private void CancelEdit()
+    {
+        editingUser = null;
+    }
+
+    private void ChangeRole(int userId, UserRole newRole)
+    {
+        authService.UpdateUserRole(userId, newRole);
+        StateHasChanged();
+    }
+
+    private void DeleteUserConfirm(User user)
+    {
+        if (authService.GetCurrentUser()?.Id != user.Id)
+        {
+            authService.DeleteUser(user.Id);
+            StateHasChanged();
+        }
+    }
+
+    private async Task ExportUsers()
+    {
+        try
+        {
+            var csv = authService.ExportUsersToCSV();
+            await DownloadFile("users_export.csv", csv, "text/csv");
+            exportMessage = "✅ Користувачі успішно експортовані!";
+        }
+        catch
+        {
+            exportMessage = "❌ Помилка при експорті користувачів!";
+        }
+        await Task.Delay(3000);
+        exportMessage = "";
+        StateHasChanged();
+    }
+
+    private async Task ExportStatistics()
+    {
+        try
+        {
+            var json = authService.ExportStatisticsToJSON();
+            await DownloadFile("statistics_export.json", json, "application/json");
+            exportMessage = "✅ Статистика успішно експортована!";
+        }
+        catch
+        {
+            exportMessage = "❌ Помилка при експорті статистики!";
+        }
+        await Task.Delay(3000);
+        exportMessage = "";
+        StateHasChanged();
+    }
+
+    private async Task ExportAllUsers()
+    {
+        try
+        {
+            var json = authService.ExportAllUsersToJSON();
+            await DownloadFile("all_users_export.json", json, "application/json");
+            exportMessage = "✅ Всі користувачі успішно експортовані!";
+        }
+        catch
+        {
+            exportMessage = "❌ Помилка при експорті!";
+        }
+        await Task.Delay(3000);
+        exportMessage = "";
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile(string filename, string content, string contentType)
+    {
+        var bytes = System.Text.Encoding.UTF8.GetBytes(content);
+        var base64 = Convert.ToBase64String(bytes);
+
+        // Імітація завантаження
+        await Task.Delay(100);
+    }
+
+    private void UpdatePasswordLength()
+    {
+        authService.SetMinimumPasswordLength(newPasswordLength);
+        exportMessage = $"✅ Мінімальна довжина пароля змінена на {newPasswordLength} символів!";
+        StateHasChanged();
+    }
+
+    private string GetPercentage(int count)
+    {
+        var total = authService.GetAllUsers().Count;
+        if (total == 0) return "0";
+        return ((count * 100) / total).ToString();
+    }
+
+    private string GetOperatingSystem()
+    {
+        return System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(
+            System.Runtime.InteropServices.OSPlatform.Windows) ? "Windows" : "Linux/MacOS";
+    }
+
+    // ===== НОВИНИ =====
+    private void OpenAddNewsForm()
+    {
+        editingNews = new NewsItem { Id = 0, Icon = "📰", Date = DateTime.Now };
+    }
+
+    private void EditNews(NewsItem news)
+    {
+        editingNews = new NewsItem
+        {
+            Id = news.Id,
+            Icon = news.Icon,
+            Title = news.Title,
+            Content = news.Content,
+            Author = news.Author,
+            Date = news.Date
+        };
+    }
+
+    private void SaveNews()
+    {
+        if (editingNews != null)
+        {
+            if (editingNews.Id == 0)
+            {
+                editingNews.Id = newsList.Count > 0 ? newsList.Max(n => n.Id) + 1 : 1;
+                newsList.Insert(0, editingNews);
+            }
+            else
+            {
+                var existing = newsList.FirstOrDefault(n => n.Id == editingNews.Id);
+                if (existing != null)
+                {
+                    existing.Icon = editingNews.Icon;
+                    existing.Title = editingNews.Title;
+                    existing.Content = editingNews.Content;
+                    existing.Author = editingNews.Author;
+                    existing.Date = editingNews.Date;
+                }
+            }
+        }
+        CancelNewsEdit();
+        StateHasChanged();
+    }
+
+    private void CancelNewsEdit()
+    {
+        editingNews = null;
+    }
+
+    private void DeleteNews(int id)
+    {
+        newsList.RemoveAll(n => n.Id == id);
+        StateHasChanged();
+    }
+
+    // ===== ЧЛЕНИ =====
+    private void OpenAddMemberForm()
+    {
+        editingMember = new FamilyMember { Id = 0, JoinedDate = DateTime.Now };
+    }
+
+    private void EditMember(FamilyMember member)
+    {
+        editingMember = new FamilyMember
+        {
+            Id = member.Id,
+            Nickname = member.Nickname,
+            Rank = member.Rank,
+            AvatarUrl = member.AvatarUrl,
+            JoinedDate = member.JoinedDate
+        };
+    }
+
+    private void SaveMember()
+    {
+        if (editingMember != null)
+        {
+            if (editingMember.Id == 0)
+            {
+                editingMember.Id = membersList.Count > 0 ? membersList.Max(m => m.Id) + 1 : 1;
+                membersList.Add(editingMember);
+            }
+            else
+            {
+                var existing = membersList.FirstOrDefault(m => m.Id == editingMember.Id);
+                if (existing != null)
+                {
+                    existing.Nickname = editingMember.Nickname;
+                    existing.Rank = editingMember.Rank;
+                    existing.AvatarUrl = editingMember.AvatarUrl;
+                    existing.JoinedDate = editingMember.JoinedDate;
+                }
+            }
+        }
+        CancelMemberEdit();
+        StateHasChanged();
+    }
+
+    private void CancelMemberEdit()
+    {
+        editingMember = null;
+    }
+
+    private void DeleteMember(int id)
+    {
+        membersList.RemoveAll(m => m.Id == id);
+        StateHasChanged();
+    }
+
+    private string GetRankIcon(string rank) => rank switch
+    {
+        "Leader" => "👑",
+        "Admin" => "🛡️",
+        "Officer" => "⚔️",
+        "Member" => "🐦",
+        "Recruit" => "🌱",
+        _ => "❓"
+    };
+
+    // ===== ПРАВИЛА =====
+    private void OpenAddRuleForm()
+    {
+        editingRule = new RuleItem { Id = 0 };
+    }
+
+    private void EditRule(RuleItem rule)
+    {
+        editingRule = new RuleItem
+        {
+            Id = rule.Id,
+            Category = rule.Category,
+            Title = rule.Title,
+            Content = rule.Content
+        };
+    }
+
+    private void SaveRule()
+    {
+        if (editingRule != null)
+        {
+            if (editingRule.Id == 0)
+            {
+                editingRule.Id = rulesList.Count > 0 ? rulesList.Max(r => r.Id) + 1 : 1;
+                rulesList.Add(editingRule);
+            }
+            else
+            {
+                var existing = rulesList.FirstOrDefault(r => r.Id == editingRule.Id);
+                if (existing != null)
+                {
+                    existing.Category = editingRule.Category;
+                    existing.Title = editingRule.Title;
+                    existing.Content = editingRule.Content;
+                }
+            }
+        }
+        CancelRuleEdit();
+        StateHasChanged();
+    }
+
+    private void CancelRuleEdit()
+    {
+        editingRule = null;
+    }
+
+    private void DeleteRule(int id)
+    {
+        rulesList.RemoveAll(r => r.Id == id);
+        StateHasChanged();
+    }
+
+    // ===== КЛАССИ МОДЕЛЕЙ =====
+    public class NewsItem
+    {
+        public int Id { get; set; }
+        public string Icon { get; set; } = "📰";
+        public string Title { get; set; } = "";
+        public string Content { get; set; } = "";
+        public string Author { get; set; } = "";
+        public DateTime Date { get; set; } = DateTime.Now;
+    }
+
+    public class FamilyMember
+    {
+        public int Id { get; set; }
+        public string Nickname { get; set; } = "";
+        public string Rank { get; set; } = "";
+        public string AvatarUrl { get; set; } = "";
+        public DateTime JoinedDate { get; set; } = DateTime.Now;
+    }
+
+    public class RuleItem
+    {
+        public int Id { get; set; }
+        public string Category { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Content { get; set; } = "";
+    }
+}
+
+<style>
+    .admin-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .admin-title {
+        color: var(--accent-color);
+        text-align: center;
+        margin-bottom: 2rem;
+        font-size: 2.5rem;
+    }
+
+    .welcome-box {
+        background: rgba(196, 30, 58, 0.2);
+        border: 1px solid var(--accent-color);
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .role-badge {
+        background: rgba(196, 30, 58, 0.5);
+        color: var(--accent-color);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+
+    .current-role {
+        color: var(--accent-color);
+        font-weight: bold;
+    }
+
+    .admin-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        border-bottom: 2px solid rgba(196, 30, 58, 0.3);
+        flex-wrap: wrap;
+    }
+
+    .tab-button {
+        background: transparent;
+        border: none;
+        color: rgba(232, 232, 232, 0.7);
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        border-bottom: 3px solid transparent;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+
+    .tab-button:hover {
+        color: var(--accent-color);
+    }
+
+    .tab-button.active {
+        color: var(--accent-color);
+        border-bottom-color: var(--accent-color);
+    }
+
+    .tab-content {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2rem;
+        border-radius: 8px;
+        border: 1px solid rgba(196, 30, 58, 0.2);
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: rgba(196, 30, 58, 0.2);
+        padding: 2rem;
+        border-radius: 8px;
+        border: 1px solid var(--accent-color);
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        background: rgba(196, 30, 58, 0.3);
+        transform: translateY(-5px);
+    }
+
+    .stat-card h3 {
+        font-size: 1rem;
+        color: rgba(232, 232, 232, 0.8);
+        margin: 0 0 1rem 0;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .stat-number {
+        font-size: 3rem;
+        color: var(--accent-color);
+        margin: 0;
+        font-weight: bold;
+    }
+
+    .stats-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 2rem;
+    }
+
+    .info-card {
+        background: rgba(44, 44, 84, 0.5);
+        border: 1px solid rgba(196, 30, 58, 0.2);
+        padding: 1.5rem;
+        border-radius: 8px;
+    }
+
+    .info-card h3 {
+        margin-top: 0;
+        color: var(--accent-color);
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .info-item {
+        background: rgba(0, 0, 0, 0.2);
+        padding: 1rem;
+        border-radius: 6px;
+        border-left: 3px solid var(--accent-color);
+    }
+
+    .info-item strong {
+        display: block;
+        color: var(--accent-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .info-item p {
+        margin: 0;
+        color: rgba(232, 232, 232, 0.8);
+    }
+
+    .role-distribution {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .dist-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .dist-item span {
+        min-width: 120px;
+        color: rgba(232, 232, 232, 0.8);
+    }
+
+    .progress {
+        flex: 1;
+        height: 30px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 6px;
+        overflow: hidden;
+        border: 1px solid rgba(196, 30, 58, 0.3);
+    }
+
+    .progress-bar {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 0.85rem;
+    }
+
+    .users-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .search-input {
+        max-width: 300px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(196, 30, 58, 0.3);
+        color: rgba(232, 232, 232, 0.9);
+    }
+
+    .search-input::placeholder {
+        color: rgba(232, 232, 232, 0.5);
+    }
+
+    .table {
+        margin-top: 1.5rem;
+    }
+
+    .table-dark {
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .table-dark th {
+        color: var(--accent-color);
+        border-bottom: 2px solid var(--accent-color);
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
+    }
+
+    .table-dark td {
+        border-color: rgba(196, 30, 58, 0.2);
+        vertical-align: middle;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .action-buttons .btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+
+    .edit-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .edit-card {
+        background: #1a1a2e;
+        border: 1px solid var(--accent-color);
+        padding: 2rem;
+        border-radius: 8px;
+        max-width: 500px;
+        width: 100%;
+    }
+
+    .edit-card h4 {
+        color: var(--accent-color);
+        margin-top: 0;
+    }
+
+    .edit-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .form-group label {
+        color: rgba(232, 232, 232, 0.8);
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+    }
+
+    .roles-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .role-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(196, 30, 58, 0.3);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .role-card-header {
+        background: rgba(196, 30, 58, 0.2);
+        padding: 1rem;
+        border-bottom: 1px solid rgba(196, 30, 58, 0.3);
+    }
+
+    .role-card-header h4 {
+        margin: 0 0 0.5rem 0;
+        color: var(--accent-color);
+    }
+
+    .role-card-header small {
+        color: rgba(232, 232, 232, 0.6);
+    }
+
+    .role-card-body {
+        padding: 1.5rem;
+    }
+
+    .role-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .role-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(196, 30, 58, 0.3);
+        color: rgba(232, 232, 232, 0.8);
+        padding: 0.75rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+
+    .role-btn:hover {
+        background: rgba(196, 30, 58, 0.3);
+        border-color: var(--accent-color);
+        color: var(--accent-color);
+    }
+
+    .role-btn.active {
+        background: var(--accent-color);
+        color: #000;
+        border-color: var(--accent-color);
+    }
+
+    .activity-section {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 2rem;
+    }
+
+    .activity-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(196, 30, 58, 0.2);
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+
+    .activity-card h4 {
+        color: var(--accent-color);
+        margin-top: 0;
+    }
+
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .activity-item {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 1rem;
+        border-radius: 6px;
+        border-left: 3px solid var(--accent-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .activity-item .time {
+        color: rgba(232, 232, 232, 0.6);
+        font-size: 0.85rem;
+        min-width: 150px;
+    }
+
+    .activity-item .action {
+        flex: 1;
+        color: rgba(232, 232, 232, 0.9);
+    }
+
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .settings-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(196, 30, 58, 0.2);
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+
+    .settings-card h4 {
+        color: var(--accent-color);
+        margin-top: 0;
+        border-bottom: 1px solid rgba(196, 30, 58, 0.2);
+        padding-bottom: 1rem;
+    }
+
+    .setting-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(196, 30, 58, 0.1);
+    }
+
+    .setting-item:last-child {
+        border-bottom: none;
+    }
+
+    .setting-item label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        color: rgba(232, 232, 232, 0.9);
+    }
+
+    .setting-item input[type="checkbox"] {
+        cursor: pointer;
+    }
+
+    .info-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        color: rgba(232, 232, 232, 0.8);
+    }
+
+    .info-list div {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid rgba(196, 30, 58, 0.1);
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    /* ===== НОВИНИ УПРАВЛІННЯ ===== */
+    .management-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .management-header h3 {
+        color: var(--accent-color);
+        margin: 0;
+    }
+
+    .edit-form-container {
+        background: rgba(196, 30, 58, 0.15);
+        border: 1px solid rgba(196, 30, 58, 0.3);
+        padding: 2rem;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+    }
+
+    .edit-form-card {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid rgba(196, 30, 58, 0.2);
+    }
+
+    .edit-form-card h4 {
+        color: var(--accent-color);
+        margin-top: 0;
+    }
+
+    .form-control {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(196, 30, 58, 0.3);
+        color: rgba(232, 232, 232, 0.9);
+    }
+
+    .form-control:focus {
+        background: rgba(0, 0, 0, 0.4);
+        border-color: var(--accent-color);
+        color: rgba(232, 232, 232, 0.9);
+    }
+
+    .form-control::placeholder {
+        color: rgba(232, 232, 232, 0.5);
+    }
+
+    .form-select {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(196, 30, 58, 0.3);
+        color: rgba(232, 232, 232, 0.9);
+    }
+
+    .form-select:focus {
+        background: rgba(0, 0, 0, 0.4);
+        border-color: var(--accent-color);
+        color: rgba(232, 232, 232, 0.9);
+    }
+
+    /* ===== НОВИНИ =====  */
+    .news-management-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .news-management-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(196, 30, 58, 0.2);
+        border-radius: 8px;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .news-management-card:hover {
+        background: rgba(0, 0, 0, 0.4);
+        border-color: rgba(196, 30, 58, 0.4);
+    }
+
+    .news-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .news-card-header strong {
+        color: var(--accent-color);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .news-icon {
+        font-size: 1.5rem;
+    }
+
+    .news-date {
+        color: rgba(232, 232, 232, 0.6);
+        font-size: 0.85rem;
+        white-space: nowrap;
+    }
+
+    .news-card-body {
+        margin-bottom: 1rem;
+        color: rgba(232, 232, 232, 0.8);
+    }
+
+    .news-card-body p {
+        margin: 0 0 0.75rem 0;
+    }
+
+    /* ===== ЧЛЕНИ =====  */
+    .members-management-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .member-management-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(196, 30, 58, 0.2);
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .member-management-card:hover {
+        background: rgba(0, 0, 0, 0.4);
+        border-color: rgba(196, 30, 58, 0.4);
+        transform: translateY(-3px);
+    }
+
+    .member-avatar-small {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        margin: 0 auto 1rem;
+        border: 2px solid rgba(196, 30, 58, 0.3);
+    }
+
+    .member-info {
+        margin-bottom: 1rem;
+    }
+
+    .member-info strong {
+        display: block;
+        color: var(--accent-color);
+        margin-bottom: 0.5rem;
+    }
+
+    .member-rank-badge {
+        display: inline-block;
+        background: rgba(196, 30, 58, 0.2);
+        color: rgba(232, 232, 232, 0.8);
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .member-info small {
+        color: rgba(232, 232, 232, 0.6);
+    }
+
+    /* ===== ПРАВИЛА =====  */
+    .rules-management-container {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .rules-section-management {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(196, 30, 58, 0.2);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .section-title {
+        background: rgba(196, 30, 58, 0.2);
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(196, 30, 58, 0.2);
+        color: var(--accent-color);
+        font-weight: bold;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .rule-count {
+        background: var(--accent-color);
+        color: #000;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: bold;
+    }
+
+    .rules-list-management {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .rule-item-management {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(196, 30, 58, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        transition: background 0.3s ease;
+    }
+
+    .rule-item-management:last-child {
+        border-bottom: none;
+    }
+
+    .rule-item-management:hover {
+        background: rgba(196, 30, 58, 0.1);
+    }
+
+    .rule-item-management strong {
+        color: rgba(232, 232, 232, 0.9);
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .rule-item-management p {
+        margin: 0;
+        color: rgba(232, 232, 232, 0.7);
+        font-size: 0.9rem;
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: rgba(232, 232, 232, 0.6);
+        border: 2px dashed rgba(196, 30, 58, 0.2);
+        border-radius: 8px;
+    }
+
+    .empty-state p {
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    /* ===== LOGS ===== */
+    .logs-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .logs-filter {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .logs-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .log-item {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 1rem;
+        border-radius: 6px;
+        border-left: 4px solid;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+    }
+
+    .log-info {
+        border-left-color: #17a2b8;
+    }
+
+    .log-success {
+        border-left-color: #28a745;
+    }
+
+    .log-warning {
+        border-left-color: #ffc107;
+    }
+
+    .log-error {
+        border-left-color: #dc3545;
+    }
+
+    .log-time {
+        color: rgba(232, 232, 232, 0.6);
+        font-size: 0.85rem;
+        min-width: 80px;
+    }
+
+    .log-type {
+        min-width: 70px;
+        font-weight: bold;
+    }
+
+    .log-message {
+        flex: 1;
+        color: rgba(232, 232, 232, 0.8);
+    }
+
+    /* ===== SECURITY ===== */
+    .security-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .security-card {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(196, 30, 58, 0.2);
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+
+    .security-card h4 {
+        color: var(--accent-color);
+        margin-top: 0;
+    }
+
+    .session-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .session-item {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 1rem;
+        border-radius: 6px;
+        border: 1px solid rgba(196, 30, 58, 0.2);
+    }
+
+    .session-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .session-info strong {
+        color: var(--accent-color);
+    }
+
+    .session-role {
+        background: rgba(196, 30, 58, 0.2);
+        color: rgba(232, 232, 232, 0.8);
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+
+    .session-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .session-details small {
+        color: rgba(232, 232, 232, 0.6);
+        font-size: 0.8rem;
+    }
+
+    .session-badge {
+        display: inline-block;
+    }
+
+    .attempts-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .attempt-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.05);
+        border-left: 3px solid;
+    }
+
+    .attempt-item.success {
+        border-left-color: #28a745;
+    }
+
+    .attempt-item.failed {
+        border-left-color: #ffc107;
+    }
+
+    .attempt-item.blocked {
+        border-left-color: #dc3545;
+    }
+
+    .attempt-item strong {
+        color: var(--accent-color);
+        font-size: 1.5rem;
+    }
+
+    .permission-item {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(196, 30, 58, 0.1);
+    }
+
+    .permission-item:last-child {
+        border-bottom: none;
+    }
+</style>

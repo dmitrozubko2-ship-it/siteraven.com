@@ -1,0 +1,376 @@
+@page "/leaderboard"
+@using Raven_Family.Services
+@using Raven_Family.Models
+@inject UserProfileService userProfileService
+
+<PageTitle>Топ гравців - Сім'я Воронів</PageTitle>
+
+<div class="leaderboard-container">
+    <h1>🏆 Топ найактивніших членів сім'ї</h1>
+    <div class="tabs">
+        <button class="tab-btn @(activeTab == "active" ? "active" : "")" @onclick='() => SetTab("active")'>
+            🔥 Топ активних
+        </button>
+        <button class="tab-btn @(activeTab == "veterans" ? "active" : "")" @onclick='() => SetTab("veterans")'>
+            👑 Ветерани
+        </button>
+        <button class="tab-btn @(activeTab == "reputation" ? "active" : "")" @onclick='() => SetTab("reputation")'>
+            ⭐ За репутацією
+        </button>
+    </div>
+
+    <div class="leaderboard-table">
+        <div class="table-header">
+            <div class="col-rank">#</div>
+            <div class="col-player">Учасник</div>
+            <div class="col-stat">@GetStatLabel()</div>
+        </div>
+
+        @foreach (var (player, index) in GetSortedPlayers().Select((p, i) => (p, i + 1)))
+        {
+            <div class="table-row @(index <= 3 ? "top-" + index : "")">
+                <div class="col-rank">
+                    <span class="rank-badge">@GetRankEmoji(index)@index</span>
+                </div>
+                <div class="col-player">
+                    <div class="player-info">
+                        <img src="@player.AvatarUrl" alt="Avatar" class="player-avatar">
+                        <div>
+                            <div class="player-name">@player.User?.Username</div>
+                            <div class="player-level">Рівень @player.Level</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-stat">
+                    <span class="stat-highlight">@GetStatValue(player)</span>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private string activeTab = "active";
+    private List<UserProfile> players = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPlayersAsync();
+    }
+
+    private async Task LoadPlayersAsync()
+    {
+        players = await userProfileService.GetAllProfilesAsync();
+
+        // Якщо немає даних, показати демо-дані
+        if (players.Count == 0)
+        {
+            players = new List<UserProfile>
+            {
+                new UserProfile
+                {
+                    Id = 1,
+                    UserId = 1,
+                    Level = 50,
+                    ExperiencePoints = 50000,
+                    Reputation = 5000,
+                    CreatedAt = new DateTime(2021, 1, 15),
+                    AvatarUrl = "https://ui-avatars.com/api/?name=Ragnar&background=c41e3a&color=fff",
+                    User = new Models.User { Username = "Ragnar", Email = "ragnar@raven.com" }
+                },
+                new UserProfile
+                {
+                    Id = 2,
+                    UserId = 2,
+                    Level = 45,
+                    ExperiencePoints = 45000,
+                    Reputation = 4500,
+                    CreatedAt = new DateTime(2021, 3, 20),
+                    AvatarUrl = "https://ui-avatars.com/api/?name=ShadowRaven&background=c41e3a&color=fff",
+                    User = new Models.User { Username = "ShadowRaven", Email = "shadow@raven.com" }
+                },
+                new UserProfile
+                {
+                    Id = 3,
+                    UserId = 3,
+                    Level = 42,
+                    ExperiencePoints = 42000,
+                    Reputation = 4200,
+                    CreatedAt = new DateTime(2021, 6, 10),
+                    AvatarUrl = "https://ui-avatars.com/api/?name=NightWing&background=c41e3a&color=fff",
+                    User = new Models.User { Username = "NightWing", Email = "night@raven.com" }
+                },
+                new UserProfile
+                {
+                    Id = 4,
+                    UserId = 4,
+                    Level = 38,
+                    ExperiencePoints = 38000,
+                    Reputation = 3800,
+                    CreatedAt = new DateTime(2021, 7, 5),
+                    AvatarUrl = "https://ui-avatars.com/api/?name=Whisper&background=c41e3a&color=fff",
+                    User = new Models.User { Username = "Whisper", Email = "whisper@raven.com" }
+                },
+                new UserProfile
+                {
+                    Id = 5,
+                    UserId = 5,
+                    Level = 35,
+                    ExperiencePoints = 35000,
+                    Reputation = 3500,
+                    CreatedAt = new DateTime(2021, 9, 12),
+                    AvatarUrl = "https://ui-avatars.com/api/?name=Crow&background=c41e3a&color=fff",
+                    User = new Models.User { Username = "Crow", Email = "crow@raven.com" }
+                },
+                new UserProfile
+                {
+                    Id = 6,
+                    UserId = 6,
+                    Level = 32,
+                    ExperiencePoints = 32000,
+                    Reputation = 3200,
+                    CreatedAt = new DateTime(2021, 10, 8),
+                    AvatarUrl = "https://ui-avatars.com/api/?name=Eclipse&background=c41e3a&color=fff",
+                    User = new Models.User { Username = "Eclipse", Email = "eclipse@raven.com" }
+                },
+                new UserProfile
+                {
+                    Id = 7,
+                    UserId = 7,
+                    Level = 28,
+                    ExperiencePoints = 28000,
+                    Reputation = 2800,
+                    CreatedAt = new DateTime(2021, 11, 3),
+                    AvatarUrl = "https://ui-avatars.com/api/?name=Phoenix&background=c41e3a&color=fff",
+                    User = new Models.User { Username = "Phoenix", Email = "phoenix@raven.com" }
+                },
+                new UserProfile
+                {
+                    Id = 8,
+                    UserId = 8,
+                    Level = 25,
+                    ExperiencePoints = 25000,
+                    Reputation = 2500,
+                    CreatedAt = new DateTime(2023, 1, 20),
+                    AvatarUrl = "https://ui-avatars.com/api/?name=Raven&background=c41e3a&color=fff",
+                    User = new Models.User { Username = "Raven", Email = "raven@raven.com" }
+                },
+                new UserProfile
+                {
+                    Id = 9,
+                    UserId = 9,
+                    Level = 22,
+                    ExperiencePoints = 22000,
+                    Reputation = 2200,
+                    CreatedAt = new DateTime(2022, 5, 15),
+                    AvatarUrl = "https://ui-avatars.com/api/?name=Midnight&background=c41e3a&color=fff",
+                    User = new Models.User { Username = "Midnight", Email = "midnight@raven.com" }
+                },
+                new UserProfile
+                {
+                    Id = 10,
+                    UserId = 10,
+                    Level = 20,
+                    ExperiencePoints = 20000,
+                    Reputation = 2000,
+                    CreatedAt = new DateTime(2021, 8, 22),
+                    AvatarUrl = "https://ui-avatars.com/api/?name=Vortex&background=c41e3a&color=fff",
+                    User = new Models.User { Username = "Vortex", Email = "vortex@raven.com" }
+                }
+            };
+        }
+    }
+
+    private void SetTab(string tab)
+    {
+        activeTab = tab;
+    }
+
+    private IEnumerable<UserProfile> GetSortedPlayers()
+    {
+        return activeTab switch
+        {
+            "active" => players.OrderByDescending(p => p.ExperiencePoints).Take(50),
+            "veterans" => players.OrderByDescending(p => p.CreatedAt).Take(50),
+            "reputation" => players.OrderByDescending(p => p.Reputation).Take(50),
+            _ => players.Take(50)
+        };
+    }
+
+    private string GetStatLabel() => activeTab switch
+    {
+        "active" => "XP",
+        "veterans" => "В грі з",
+        "reputation" => "Репутація",
+        _ => "Статистика"
+    };
+
+    private string GetStatValue(UserProfile player) => activeTab switch
+    {
+        "active" => player.ExperiencePoints.ToString("N0"),
+        "veterans" => player.CreatedAt.ToString("dd.MM.yyyy"),
+        "reputation" => player.Reputation.ToString(),
+        _ => ""
+    };
+
+    private string GetRankEmoji(int position) => position switch
+    {
+        1 => "🥇 ",
+        2 => "🥈 ",
+        3 => "🥉 ",
+        _ => ""
+    };
+}
+
+<style>
+.leaderboard-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.leaderboard-container h1 {
+    text-align: center;
+    color: #d0a8ff;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+}
+
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    background: #1a0033;
+    border: 2px solid #3d2d5e;
+    color: #b899d6;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+}
+
+.tab-btn:hover,
+.tab-btn.active {
+    background: #9d4edd;
+    color: white;
+    border-color: #9d4edd;
+}
+
+.leaderboard-table {
+    background: linear-gradient(135deg, #1a0033 0%, #2d1b69 100%);
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid #3d2d5e;
+}
+
+.table-header {
+    display: grid;
+    grid-template-columns: 60px 1fr 150px;
+    background: #2d1b69;
+    padding: 15px 20px;
+    font-weight: bold;
+    color: #d0a8ff;
+    border-bottom: 2px solid #3d2d5e;
+}
+
+.table-row {
+    display: grid;
+    grid-template-columns: 60px 1fr 150px;
+    padding: 15px 20px;
+    border-bottom: 1px solid #3d2d5e;
+    align-items: center;
+    transition: background 0.2s;
+}
+
+.table-row:hover {
+    background: rgba(157, 78, 221, 0.1);
+}
+
+.table-row.top-1 {
+    background: rgba(255, 214, 10, 0.05);
+    border-left: 4px solid #ffd60a;
+}
+
+.table-row.top-2 {
+    background: rgba(192, 192, 192, 0.05);
+    border-left: 4px solid #c0c0c0;
+}
+
+.table-row.top-3 {
+    background: rgba(205, 127, 50, 0.05);
+    border-left: 4px solid #cd7f32;
+}
+
+.col-rank {
+    text-align: center;
+}
+
+.rank-badge {
+    background: #9d4edd;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.col-player {
+    display: flex;
+}
+
+.player-info {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.player-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid #9d4edd;
+    object-fit: cover;
+}
+
+.player-name {
+    font-weight: bold;
+    color: #d0a8ff;
+}
+
+.player-level {
+    font-size: 0.9em;
+    color: #b899d6;
+}
+
+.col-stat {
+    text-align: right;
+}
+
+.stat-highlight {
+    font-weight: bold;
+    color: #ffd60a;
+    font-size: 1.1em;
+}
+
+@@media (max-width: 768px) {
+    .table-header,
+    .table-row {
+        grid-template-columns: 40px 1fr 80px;
+    }
+
+    .player-avatar {
+        width: 40px;
+        height: 40px;
+    }
+
+    .leaderboard-container h1 {
+        font-size: 1.8em;
+    }
+}
+</style>

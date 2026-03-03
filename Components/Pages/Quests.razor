@@ -1,0 +1,291 @@
+@page "/quests"
+@using Raven_Family.Services
+@inject AuthService authService
+@inject NavigationManager navigationManager
+
+<PageTitle>Квести - Сім'я Воронів</PageTitle>
+
+@if (!authService.IsLoggedIn())
+{
+    <div class="alert alert-warning">
+        <p>Будь ласка, <a href="/login">увійдіть</a> щоб брати участь у квестах.</p>
+    </div>
+}
+else
+{
+    <div class="quests-container">
+        <div class="quests-header">
+            <h1>🎯 Квести та пасхалки</h1>
+            <p class="intro">Виконуй завдання, отримуй нагороди та розблоковуй секретні квести!</p>
+        </div>
+
+        <div class="quest-tabs">
+            <button class="tab @(activeType == "main" ? "active" : "")" @onclick='() => SetType("main")'>
+                ⭐ Основні
+            </button>
+            <button class="tab @(activeType == "secret" ? "active" : "")" @onclick='() => SetType("secret")'>
+                🔒 Секретні
+            </button>
+            <button class="tab @(activeType == "easter" ? "active" : "")" @onclick='() => SetType("easter")'>
+                🥚 Пасхалки
+            </button>
+        </div>
+
+        <div class="quests-grid">
+            <div class="quest-card">
+                <div class="quest-icon">⭐</div>
+                <h3>Перший вклад</h3>
+                <p class="description">Напиши своє перше повідомлення на сайті</p>
+                <div class="rewards">
+                    <span class="reward">+100 XP</span>
+                    <span class="reward">+10 💰</span>
+                </div>
+                <button class="btn-complete">Виконано ✓</button>
+            </div>
+
+            <div class="quest-card completed">
+                <div class="quest-icon">🎯</div>
+                <h3>Дослідник</h3>
+                <p class="description">Відвідай всі розділи сайту</p>
+                <div class="rewards">
+                    <span class="reward">+200 XP</span>
+                    <span class="reward">+25 💰</span>
+                </div>
+                <button class="btn-complete" disabled>✓ Завершено</button>
+            </div>
+
+            <div class="quest-card secret">
+                <div class="quest-icon">🔓</div>
+                <h3>Секрет рад лідерів</h3>
+                <p class="description">Розблокуй доступ до закритого розділу</p>
+                <div class="rewards">
+                    <span class="reward">+500 XP</span>
+                    <span class="reward">+50 💰</span>
+                </div>
+                <button class="btn-progress">Прогрес: 2/5</button>
+            </div>
+
+            <div class="quest-card easter">
+                <div class="quest-icon">🥚</div>
+                <h3>П'ять щоб розблокувати</h3>
+                <p class="description">🐦 Кліни на воронів 5 разів! (0/5)</p>
+                <div class="rewards">
+                    <span class="reward">+??? XP</span>
+                    <span class="reward">+??? 💰</span>
+                </div>
+                <button class="btn-progress">Прогрес: 0/5</button>
+            </div>
+
+            <div class="quest-card">
+                <div class="quest-icon">👑</div>
+                <h3>Лідер</h3>
+                <p class="description">Досягни рівня 20</p>
+                <div class="rewards">
+                    <span class="reward">+1000 XP</span>
+                    <span class="reward">+100 💰</span>
+                </div>
+                <button class="btn-progress">Прогрес: 15/20</button>
+            </div>
+
+            <div class="quest-card">
+                <div class="quest-icon">🏆</div>
+                <h3>Легенда</h3>
+                <p class="description">Набери 50 репутації</p>
+                <div class="rewards">
+                    <span class="reward">+2000 XP</span>
+                    <span class="reward">+200 💰</span>
+                </div>
+                <button class="btn-progress">Прогрес: 23/50</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private string activeType = "main";
+
+    private void SetType(string type)
+    {
+        activeType = type;
+    }
+}
+
+<style>
+.quests-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.quests-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.quests-header h1 {
+    color: #d0a8ff;
+    font-size: 2.5em;
+    margin: 0 0 10px 0;
+}
+
+.intro {
+    color: #b899d6;
+    font-size: 1.1em;
+}
+
+.quest-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.tab {
+    background: #1a0033;
+    border: 2px solid #3d2d5e;
+    color: #b899d6;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+}
+
+.tab:hover,
+.tab.active {
+    background: #9d4edd;
+    color: white;
+    border-color: #9d4edd;
+}
+
+.quests-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.quest-card {
+    background: linear-gradient(135deg, #1a0033 0%, #2d1b69 100%);
+    border: 2px solid #3d2d5e;
+    border-radius: 10px;
+    padding: 20px;
+    color: white;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.quest-card:hover {
+    border-color: #9d4edd;
+    box-shadow: 0 0 20px rgba(157, 78, 221, 0.3);
+    transform: translateY(-5px);
+}
+
+.quest-card.completed {
+    border-color: #4caf50;
+    background: linear-gradient(135deg, #1a3a1a 0%, #2d4a2d 100%);
+}
+
+.quest-card.secret {
+    border-color: #ff9800;
+    background: linear-gradient(135deg, #2d1a0a 0%, #4a2d1a 100%);
+}
+
+.quest-card.easter {
+    border-color: #ffd60a;
+    background: linear-gradient(135deg, #2d2d1a 0%, #4a4a2d 100%);
+}
+
+.quest-icon {
+    font-size: 3em;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.quest-card h3 {
+    margin: 0 0 10px 0;
+    color: #d0a8ff;
+    font-size: 1.3em;
+}
+
+.description {
+    color: #b899d6;
+    font-size: 0.95em;
+    margin: 0 0 15px 0;
+}
+
+.rewards {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.reward {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.9em;
+    color: #ffd60a;
+}
+
+.btn-complete,
+.btn-progress {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+.btn-complete {
+    background: #4caf50;
+    color: white;
+}
+
+.btn-complete:hover {
+    background: #66bb6a;
+}
+
+.btn-progress {
+    background: #9d4edd;
+    color: white;
+}
+
+.btn-progress:hover {
+    background: #bb86fc;
+}
+
+.btn-complete:disabled {
+    background: #555;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.alert {
+    background: #3d2d5e;
+    border: 1px solid #9d4edd;
+    color: #d0a8ff;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.alert a {
+    color: #ffd60a;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+@@media (max-width: 768px) {
+    .quests-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .quests-header h1 {
+        font-size: 1.8em;
+    }
+}
+</style>

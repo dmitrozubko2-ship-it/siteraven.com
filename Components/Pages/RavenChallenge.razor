@@ -1,0 +1,285 @@
+@page "/quests/raven-challenge"
+@using Raven_Family.Services
+@inject AuthService authService
+@rendermode InteractiveServer
+
+<PageTitle>🎯 Вороняче Випробування</PageTitle>
+
+<div class="quest-container">
+    <div class="quest-header">
+        <h1>🎯 Вороняче Випробування</h1>
+        <p class="quest-subtitle">Клікни на ворона 5 разів щоб відкрити секрет!</p>
+    </div>
+
+    <div class="raven-challenge">
+        <div class="click-counter">
+            Клік: <span class="counter-value">@ravenClicks</span>/5
+        </div>
+
+        <button class="raven-button" 
+                @onclick="OnRavenClick"
+                title="Клікни на мене!">
+            🐦
+        </button>
+
+        @if (ravenClicks > 0)
+        {
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: @(ravenClicks * 20)%"></div>
+            </div>
+        }
+
+        @if (ravenClicks >= 5 && !secretUnlocked)
+        {
+            <div class="secret-unlock">
+                <h2>✨ СЕКРЕТ РОЗКРИТИЙ! ✨</h2>
+            </div>
+        }
+
+        @if (secretUnlocked)
+        {
+            <div class="secret-content">
+                <h2>🔮 Таємниця Воронів</h2>
+                <p>Ти знайшов прихований месседж сім'ї Воронів!</p>
+                
+                <div class="secret-message">
+                    <p>Ворон - символ мудрості, хитрості та магії. Кожен учасник нашої сім'ї носить в собі дух ворона:</p>
+                    <ul>
+                        <li>🧠 <strong>Мудрість</strong> - навчаємося один від одного</li>
+                        <li>🎯 <strong>Хитрість</strong> - творче вирішуємо завдання</li>
+                        <li>✨ <strong>Магія</strong> - разом творимо дивне</li>
+                    </ul>
+                </div>
+
+                <div class="reward-box">
+                    <h3>🎁 Твоя Нагорода</h3>
+                    <p>+50 XP за знаходження пасхалки</p>
+                    <p>🏆 Прихована нагорода: "Дослідник Таємниць"</p>
+                </div>
+
+                <button class="reset-btn" @onclick="ResetChallenge">
+                    ↺ Почати заново
+                </button>
+            </div>
+        }
+    </div>
+
+    <div class="quest-info">
+        <h2>📖 Про Вороняче Випробування</h2>
+        <p>Це міні-квест для всіх учасників сім'ї. Знайдіть прихований сюрприз і отримайте спеціальну нагороду!</p>
+        <p>Таких пасхалок по всьому сайту для тих, хто любить дослідження... 🔍</p>
+    </div>
+</div>
+
+<style>
+    .quest-container {
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 30px 20px;
+        color: #fff;
+    }
+
+    .quest-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .quest-header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+        background: linear-gradient(135deg, #8b3a8b, #c41e3a);
+        background-clip: unset;
+        color: #ffd700;
+    }
+
+    .quest-subtitle {
+        color: #8b3a8b;
+        font-size: 1.1em;
+    }
+
+    .raven-challenge {
+        background: rgba(30, 10, 40, 0.8);
+        border: 3px solid #8b3a8b;
+        border-radius: 15px;
+        padding: 40px;
+        text-align: center;
+        margin-bottom: 30px;
+        backdrop-filter: blur(10px);
+    }
+
+    .click-counter {
+        font-size: 1.3em;
+        margin-bottom: 30px;
+        color: #ffd700;
+        font-weight: bold;
+    }
+
+    .counter-value {
+        font-size: 1.5em;
+        color: #c41e3a;
+    }
+
+    .raven-button {
+        font-size: 80px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        margin: 0 auto;
+        display: block;
+        transition: all 0.2s ease;
+    }
+
+    .raven-button:active {
+        transform: scale(0.9);
+        filter: drop-shadow(0 0 10px rgba(196, 30, 58, 0.8));
+    }
+
+    .raven-button:hover {
+        filter: drop-shadow(0 5px 15px rgba(196, 30, 58, 0.6));
+    }
+
+    .progress-bar {
+        width: 100%;
+        height: 30px;
+        background: rgba(50, 20, 70, 0.5);
+        border-radius: 15px;
+        margin-top: 20px;
+        overflow: hidden;
+        border: 2px solid #8b3a8b;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #8b3a8b, #c41e3a);
+        transition: width 0.3s ease;
+        border-radius: 13px;
+    }
+
+    .secret-unlock {
+        margin-top: 20px;
+        padding: 20px;
+        background: rgba(196, 30, 58, 0.2);
+        border: 2px dashed #ffd700;
+        border-radius: 8px;
+    }
+
+    .secret-unlock h2 {
+        color: #ffd700;
+        margin: 0;
+    }
+
+    .secret-content {
+        background: rgba(50, 20, 70, 0.6);
+        border: 2px solid #ffd700;
+        border-radius: 12px;
+        padding: 30px;
+        margin-top: 20px;
+    }
+
+    .secret-content h2 {
+        color: #ffd700;
+        margin-top: 0;
+    }
+
+    .secret-message {
+        background: rgba(30, 10, 40, 0.6);
+        border-left: 4px solid #c41e3a;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 8px;
+        text-align: left;
+    }
+
+    .secret-message ul {
+        margin: 15px 0;
+        padding-left: 20px;
+    }
+
+    .secret-message li {
+        margin-bottom: 10px;
+        color: #ddd;
+    }
+
+    .reward-box {
+        background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(196, 30, 58, 0.1));
+        border: 2px solid #ffd700;
+        border-radius: 8px;
+        padding: 15px;
+        margin: 20px 0;
+    }
+
+    .reward-box h3 {
+        color: #ffd700;
+        margin-top: 0;
+    }
+
+    .reward-box p {
+        margin: 8px 0;
+        color: #ddd;
+    }
+
+    .reset-btn {
+        padding: 12px 30px;
+        background: linear-gradient(135deg, #8b3a8b, #c41e3a);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        margin-top: 15px;
+    }
+
+    .reset-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(196, 30, 58, 0.3);
+    }
+
+    .reset-btn:active {
+        transform: translateY(0);
+    }
+
+    .quest-info {
+        background: rgba(50, 20, 70, 0.5);
+        border: 2px solid #8b3a8b;
+        border-radius: 12px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+    }
+
+    .quest-info h2 {
+        color: #ffd700;
+        margin-top: 0;
+    }
+
+    .quest-info p {
+        color: #ddd;
+        margin: 10px 0;
+    }
+</style>
+
+@code {
+    private int ravenClicks = 0;
+    private bool secretUnlocked = false;
+
+    private async Task OnRavenClick()
+    {
+        if (ravenClicks < 5)
+        {
+            ravenClicks++;
+            if (ravenClicks == 5)
+            {
+                await Task.Delay(300);
+                secretUnlocked = true;
+            }
+        }
+    }
+
+    private void ResetChallenge()
+    {
+        ravenClicks = 0;
+        secretUnlocked = false;
+    }
+}

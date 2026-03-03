@@ -1,0 +1,205 @@
+@page "/register"
+@using Raven_Family.Services
+@inject AuthService authService
+@inject EmailService emailService
+@inject NavigationManager navigationManager
+
+<PageTitle>Реєстрація - Сім'я Воронів</PageTitle>
+
+<div class="auth-container">
+    <div class="auth-card">
+        <h2 class="auth-title">🐦 Створити новий акаунт</h2>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger">@errorMessage</div>
+        }
+
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="alert alert-success">@successMessage</div>
+        }
+
+        @if (!registrationComplete)
+        {
+            <form @onsubmit="HandleRegister">
+                <div class="mb-3">
+                    <label class="form-label">Ім'я користувача</label>
+                    <input type="text" class="form-control" @bind="username" placeholder="Введіть ім'я користувача" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" @bind="email" placeholder="your@email.com" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Пароль</label>
+                    <input type="password" class="form-control" @bind="password" placeholder="Мінімум @authService.GetMinimumPasswordLength() символів" required />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Підтвердження пароля</label>
+                    <input type="password" class="form-control" @bind="confirmPassword" placeholder="Повторіть пароль" required />
+                </div>
+
+                <div class="info-box">
+                    <p><strong>ℹ️ Інформація:</strong> Після реєстрації ви отримаєте роль "Участник сім'ї".</p>
+                    <p><strong>📧 Верифікація:</strong> На ваш email буде відправлено посилання для підтвердження.</p>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span>⏳ Реєстрація...</span>
+                    }
+                    else
+                    {
+                        <span>Зареєструватися</span>
+                    }
+                </button>
+            </form>
+        }
+        else
+        {
+            <div class="success-message" style="text-align: center;">
+                <h3 style="color: #28a745; margin-bottom: 1rem;">✅ Реєстрація успішна!</h3>
+                <p style="margin-bottom: 1rem;">На вашу email адресу <strong>@email</strong> було відправлено лист з посиланням для підтвердження.</p>
+                <p style="margin-bottom: 1rem;">Будь ласка, перевірте ваш email та натисніть на посилання для активації акаунту.</p>
+                <p style="color: #666; font-size: 0.9rem;">Якщо ви не бачите листа, перевірте папку "Спам".</p>
+            </div>
+        }
+
+        <div class="auth-link">
+            Вже маєте акаунт? <a href="/login">Увійти</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string username = "";
+    private string email = "";
+    private string password = "";
+    private string confirmPassword = "";
+    private string errorMessage = "";
+    private string successMessage = "";
+    private bool registrationComplete = false;
+    private bool isLoading = false;
+
+    private async Task HandleRegister()
+    {
+        errorMessage = "";
+        successMessage = "";
+        isLoading = true;
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            {
+                errorMessage = "Будь ласка, заповніть все поля!";
+                return;
+            }
+
+            if (password != confirmPassword)
+            {
+                errorMessage = "Паролі не совпадають!";
+                return;
+            }
+
+            if (password.Length < authService.GetMinimumPasswordLength())
+            {
+                errorMessage = $"Пароль повинен бути не менше {authService.GetMinimumPasswordLength()} символів!";
+                return;
+            }
+
+            if (authService.Register(username, email, password))
+            {
+                var baseUrl = navigationManager.BaseUri;
+                var token = authService.GetEmailConfirmationToken(email);
+
+                if (!string.IsNullOrEmpty(token))
+                {
+                    var sent = await emailService.SendConfirmationEmailAsync(email, token, baseUrl);
+                    if (sent)
+                    {
+                        registrationComplete = true;
+                        successMessage = "✅ Реєстрація успішна! На вашу email адресу відправлено лист для підтвердження.";
+                    }
+                    else
+                    {
+                        errorMessage = "Реєстрація успішна, але не вдалося відправити лист для підтвердження. Спробуйте пізніше.";
+                    }
+                }
+                else
+                {
+                    errorMessage = "Помилка при генеруванні токена. Спробуйте ще раз.";
+                }
+            }
+            else
+            {
+                errorMessage = "Користувач з таким іменем або email вже існує!";
+            }
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
+
+
+<style>
+    .auth-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 90vh;
+        padding: 2rem 1rem;
+    }
+
+    .auth-card {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(196, 30, 58, 0.5);
+        border-radius: 12px;
+        padding: 2rem;
+        width: 100%;
+        max-width: 450px;
+        backdrop-filter: blur(10px);
+    }
+
+    .auth-title {
+        text-align: center;
+        color: var(--accent-color);
+        margin-bottom: 2rem;
+    }
+
+    .auth-link {
+        text-align: center;
+        margin-top: 1rem;
+        font-size: 0.9rem;
+    }
+
+    .auth-link a {
+        color: var(--accent-color);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .auth-link a:hover {
+        text-decoration: underline;
+    }
+
+    .info-box {
+        background: rgba(196, 30, 58, 0.2);
+        border-left: 3px solid var(--accent-color);
+        padding: 1rem;
+        border-radius: 6px;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        color: rgba(232, 232, 232, 0.9);
+    }
+
+    .info-box p {
+        margin: 0;
+    }
+</style>

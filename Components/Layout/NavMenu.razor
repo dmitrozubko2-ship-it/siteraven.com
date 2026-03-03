@@ -1,0 +1,240 @@
+﻿@using Raven_Family.Services
+@inject AuthService authService
+@inject NavigationManager navigationManager
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href=""><span class="raven-icon">🐦</span> Сім'я Воронів</a>
+        <div class="auth-buttons">
+            @if (!authService.IsLoggedIn())
+            {
+                <a href="/login" class="btn btn-sm btn-outline-primary">Вхід</a>
+                <a href="/register" class="btn btn-sm btn-outline-success">Реєстрація</a>
+            }
+            else
+            {
+                <!-- Профіль користувача -->
+                <div class="user-profile-card">
+                    <a href="@GetProfileUrl()" class="profile-link">
+                        <img src="@GetUserAvatar()" alt="@authService.GetCurrentUser().Username" class="profile-avatar" />
+                        <div class="profile-info">
+                            <div class="profile-name">@authService.GetCurrentUser().Username</div>
+                            <div class="profile-role">@authService.GetRoleDisplayName(authService.GetCurrentUserRole())</div>
+                        </div>
+                    </a>
+                </div>
+                @if (authService.IsAdmin())
+                {
+                    <a href="/admin" class="btn btn-sm btn-warning">⚙️ Адмін</a>
+                }
+                <button @onclick="HandleLogout" class="btn btn-sm btn-outline-danger">Вихід</button>
+            }
+        </div>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="nav flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Головна
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="family">
+                <span class="bi bi-people-fill-nav-menu" aria-hidden="true"></span> Про сім'ю
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="members">
+                <span class="bi bi-person-lines-fill-nav-menu" aria-hidden="true"></span> Члени
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="achievements">
+                <span class="bi bi-trophy-nav-menu" aria-hidden="true"></span> Досягнення
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="rules">
+                <span class="bi bi-book-nav-menu" aria-hidden="true"></span> Правила
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="gallery">
+                <span class="bi bi-images-nav-menu" aria-hidden="true"></span> Галерея
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="news">
+                <span class="bi bi-newspaper-nav-menu" aria-hidden="true"></span> Новини
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="application">
+                <span class="bi bi-file-earmark-text-nav-menu" aria-hidden="true"></span> Заявка
+            </NavLink>
+        </div>
+
+        <!-- Нові розділи -->
+        <hr class="nav-divider" />
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="dashboard">
+                <span class="nav-icon">📊</span> Статистика
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="leaderboard">
+                <span class="nav-icon">🏆</span> Рейтинг
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="contracts">
+                <span class="nav-icon">📋</span> Контракти
+            </NavLink>
+        </div>
+
+        @if (authService.IsAdmin())
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="secret-council">
+                    <span class="nav-icon">🤫</span> Таємна Рада
+                </NavLink>
+            </div>
+        }
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="about">
+                <span class="bi bi-info-circle-fill-nav-menu" aria-hidden="true"></span> Про нас
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="contact">
+                <span class="bi bi-chat-dots-fill-nav-menu" aria-hidden="true"></span> Контакти
+            </NavLink>
+        </div>
+    </nav>
+</div>
+
+<style>
+    .nav-divider {
+        border: none;
+        border-top: 1px solid rgba(196, 30, 58, 0.3);
+        margin: 0.75rem 0;
+        opacity: 0.5;
+    }
+
+    .nav-icon {
+        display: inline-block;
+        margin-right: 0.5em;
+        font-size: 1.1em;
+    }
+
+    .auth-buttons {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .user-profile-card {
+        background: rgba(196, 30, 58, 0.15);
+        border: 2px solid rgba(196, 30, 58, 0.5);
+        border-radius: 10px;
+        padding: 12px;
+        transition: all 0.3s ease;
+        min-width: 220px;
+    }
+
+    .user-profile-card:hover {
+        background: rgba(196, 30, 58, 0.25);
+        border-color: #c41e3a;
+        box-shadow: 0 4px 12px rgba(196, 30, 58, 0.3);
+        transform: translateY(-2px);
+    }
+
+    .profile-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        text-decoration: none;
+        color: inherit;
+        cursor: pointer;
+    }
+
+    .profile-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        border: 2px solid #c41e3a;
+        object-fit: cover;
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .profile-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .profile-name {
+        color: #ffd700;
+        font-weight: bold;
+        font-size: 1rem;
+    }
+
+    .profile-role {
+        color: rgba(232, 232, 232, 0.7);
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .raven-icon {
+        display: inline-block;
+        margin-right: 0.5em;
+        font-size: 1.3em;
+        animation: float 3s ease-in-out infinite;
+    }
+</style>
+
+@code {
+    protected override void OnInitialized()
+    {
+        StateHasChanged();
+    }
+
+    private string GetUserAvatar()
+    {
+        var username = authService.GetCurrentUser().Username;
+        // Генеруємо аватар за ім'ям користувача
+        return $"https://ui-avatars.com/api/?name={Uri.EscapeDataString(username)}&background=c41e3a&color=fff&size=200";
+    }
+
+    private string GetProfileUrl()
+    {
+        var userId = authService.GetCurrentUser().Id;
+        return $"/profile/{userId}";
+    }
+
+    private void HandleLogout()
+    {
+        authService.Logout();
+        StateHasChanged();
+    }
+}
+
+

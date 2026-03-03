@@ -1,0 +1,78 @@
+@using System.Collections.Generic
+
+<section class="reviews-section">
+    <h2 style="text-align: center; margin-top: 0; color: var(--accent-color);">
+        💬 Відгуки учасників 💬
+    </h2>
+    
+    <div class="reviews-grid">
+        @foreach (var review in reviews)
+        {
+            <div class="review-card">
+                <div class="review-icon">💭</div>
+                <div class="review-text">"@review.Text"</div>
+                <div class="review-author">— @review.Author</div>
+                <div class="review-rating">
+                    @for (int i = 0; i < review.Rating; i++)
+                    {
+                        <span>⭐</span>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    private List<Review> reviews = new();
+
+    protected override void OnInitialized()
+    {
+        reviews = new List<Review>
+        {
+            new Review 
+            { 
+                Author = "ShadowRaven",
+                Text = "Найкраща сім'я, яку я коли-либо мав честь приєднатися. Атмосфера просто чудова, всі підтримують один одного.",
+                Rating = 5
+            },
+            new Review 
+            { 
+                Author = "NightWing",
+                Text = "Raven Family дав мені сенс приналежності. Люди тут справді клопочуться один про одного. Високо рекомендую!",
+                Rating = 5
+            },
+            new Review 
+            { 
+                Author = "Whisper",
+                Text = "Організація, дисципліна та справедливість - ось що робить цю сім'ю справді особливою. Гордий бути тут!",
+                Rating = 5
+            },
+            new Review 
+            { 
+                Author = "Crow",
+                Text = "Рідко зустрічаєш таку відданість та товариськість. Кожен день я дякую за те, що я частина цього братства.",
+                Rating = 5
+            },
+            new Review 
+            { 
+                Author = "Eclipse",
+                Text = "Від новобранця до офіцера - Raven Family допомогла мені зростати. Велике спасибі Ragnar та всім!",
+                Rating = 5
+            },
+            new Review 
+            { 
+                Author = "Phoenix",
+                Text = "Вступив недавно, але вже почуваюся вдома. Дружба та взаєморозуміння - основа нашої сім'ї.",
+                Rating = 4
+            }
+        };
+    }
+
+    public class Review
+    {
+        public string Author { get; set; }
+        public string Text { get; set; }
+        public int Rating { get; set; }
+    }
+}

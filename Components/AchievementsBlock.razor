@@ -1,0 +1,50 @@
+@using System.Timers
+
+<section class="achievements-section">
+    <h2 style="text-align: center; margin-top: 0; color: var(--accent-color);">
+        🏆 Наші Досягнення 🏆
+    </h2>
+    
+    <div class="achievements-grid">
+        <div class="achievement-card">
+            <div class="achievement-icon">👥</div>
+            <div class="achievement-number">@ParticipantsCount</div>
+            <div class="achievement-label">Учасників у сім'ї</div>
+        </div>
+        
+        <div class="achievement-card">
+            <div class="achievement-icon">🏆</div>
+            <div class="achievement-number">@VictoriesCount</div>
+            <div class="achievement-label">Досягнень і перемог</div>
+        </div>
+        
+        <div class="achievement-card">
+            <div class="achievement-icon">📅</div>
+            <div class="achievement-number">@YearFounded</div>
+            <div class="achievement-label">Рік створення</div>
+        </div>
+        
+        <div class="achievement-card">
+            <div class="achievement-icon">⭐</div>
+            <div class="achievement-number">@RatingScore</div>
+            <div class="achievement-label">Рейтинг / Оцінки</div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter]
+    public int ParticipantsCount { get; set; } = 42;
+
+    [Parameter]
+    public int VictoriesCount { get; set; } = 128;
+
+    [Parameter]
+    public int YearFounded { get; set; } = 2021;
+
+    [Parameter]
+    public double RatingScore { get; set; } = 4.9;
+
+    // Можна додати анімовані лічильники якщо потрібно
+    // Це буде основна версія без JS анімації
+}

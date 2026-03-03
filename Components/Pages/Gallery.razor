@@ -1,0 +1,181 @@
+@page "/gallery"
+
+<PageTitle>Галерея - Сім'я Воронів</PageTitle>
+
+<div class="content">
+    <h1 style="text-align: center; margin-top: 0;">🎨 Галерея сім'ї 🎨</h1>
+
+    <p style="font-size: 1.1rem; margin-bottom: 2rem; text-align: center;">
+        Відчуйте красу та величність нашої сім'ї воронів крізь чудові візуальні моменти.
+    </p>
+
+    <!-- Фільтри -->
+    <div class="gallery-filters">
+        <button class="filter-btn active" @onclick="ShowAllGallery">
+            📸 Все
+        </button>
+        <button class="filter-btn" @onclick="ShowEventGallery">
+            🎉 Івенти
+        </button>
+        <button class="filter-btn" @onclick="ShowScreenshotGallery">
+            📷 Скріни
+        </button>
+        <button class="filter-btn" @onclick="ShowMemeGallery">
+            😄 Меми
+        </button>
+    </div>
+
+    <!-- Галерея з лайтбоксом -->
+    <div class="gallery-grid">
+        @foreach (var item in filteredGalleryItems)
+        {
+            <div class="gallery-item" @onclick="() => OpenLightbox(item)">
+                <img src="@item.ThumbnailUrl" alt="@item.Title" />
+            </div>
+        }
+    </div>
+
+    <!-- Лайтбокс -->
+    <div class="lightbox @(selectedGalleryItem != null ? "show" : "")" @onclick="CloseLightbox">
+        @if (selectedGalleryItem != null)
+        {
+            <div class="lightbox-content" @onclick:stopPropagation="true">
+                <span class="lightbox-close" @onclick="CloseLightbox">&times;</span>
+                <img class="lightbox-img" src="@selectedGalleryItem.FullImageUrl" alt="@selectedGalleryItem.Title" />
+                @if (!string.IsNullOrEmpty(selectedGalleryItem.Title))
+                {
+                    <p style="color: var(--light-color); text-align: center; margin-top: 1rem;">@selectedGalleryItem.Title</p>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="card" style="margin-top: 2rem;">
+        <div class="card-body" style="padding: 2rem;">
+            <h3 style="margin-top: 0;">📸 За об'єктивом</h3>
+            <p>
+                Наша галерея захоплює суть сімейного життя - тихі моменти роздумів, 
+                веселі обміни та колективну силу, що визначає нашу сім'ю воронів. 
+                Кожне зображення розповідає історію зв'язку, інтелекту та краси природи.
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<GalleryItem> galleryItems = new();
+    private List<GalleryItem> filteredGalleryItems = new();
+    private GalleryItem selectedGalleryItem = null;
+
+    protected override void OnInitialized()
+    {
+        galleryItems = new List<GalleryItem>
+        {
+            new GalleryItem 
+            { 
+                Id = 1, 
+                Title = "Політ", 
+                Category = "Events",
+                ThumbnailUrl = "https://via.placeholder.com/200?text=Політ",
+                FullImageUrl = "https://via.placeholder.com/800?text=Політ"
+            },
+            new GalleryItem 
+            { 
+                Id = 2, 
+                Title = "Матріарх", 
+                Category = "Screenshots",
+                ThumbnailUrl = "https://via.placeholder.com/200?text=Матріарх",
+                FullImageUrl = "https://via.placeholder.com/800?text=Матріарх"
+            },
+            new GalleryItem 
+            { 
+                Id = 3, 
+                Title = "Витівки", 
+                Category = "Memes",
+                ThumbnailUrl = "https://via.placeholder.com/200?text=Витівки",
+                FullImageUrl = "https://via.placeholder.com/800?text=Витівки"
+            },
+            new GalleryItem 
+            { 
+                Id = 4, 
+                Title = "Охоронець", 
+                Category = "Events",
+                ThumbnailUrl = "https://via.placeholder.com/200?text=Охоронець",
+                FullImageUrl = "https://via.placeholder.com/800?text=Охоронець"
+            },
+            new GalleryItem 
+            { 
+                Id = 5, 
+                Title = "Молодий дослідник", 
+                Category = "Screenshots",
+                ThumbnailUrl = "https://via.placeholder.com/200?text=Молодий",
+                FullImageUrl = "https://via.placeholder.com/800?text=Молодий"
+            },
+            new GalleryItem 
+            { 
+                Id = 6, 
+                Title = "Разом", 
+                Category = "Events",
+                ThumbnailUrl = "https://via.placeholder.com/200?text=Разом",
+                FullImageUrl = "https://via.placeholder.com/800?text=Разом"
+            },
+            new GalleryItem 
+            { 
+                Id = 7, 
+                Title = "День сімейного святкування", 
+                Category = "Events",
+                ThumbnailUrl = "https://via.placeholder.com/200?text=Святкування",
+                FullImageUrl = "https://via.placeholder.com/800?text=Святкування"
+            },
+            new GalleryItem 
+            { 
+                Id = 8, 
+                Title = "Смішна момента", 
+                Category = "Memes",
+                ThumbnailUrl = "https://via.placeholder.com/200?text=Смішна",
+                FullImageUrl = "https://via.placeholder.com/800?text=Смішна"
+            }
+        };
+
+        ShowAllGallery();
+    }
+
+    private void ShowAllGallery()
+    {
+        filteredGalleryItems = galleryItems.ToList();
+    }
+
+    private void ShowEventGallery()
+    {
+        filteredGalleryItems = galleryItems.Where(x => x.Category == "Events").ToList();
+    }
+
+    private void ShowScreenshotGallery()
+    {
+        filteredGalleryItems = galleryItems.Where(x => x.Category == "Screenshots").ToList();
+    }
+
+    private void ShowMemeGallery()
+    {
+        filteredGalleryItems = galleryItems.Where(x => x.Category == "Memes").ToList();
+    }
+
+    private void OpenLightbox(GalleryItem item)
+    {
+        selectedGalleryItem = item;
+    }
+
+    private void CloseLightbox()
+    {
+        selectedGalleryItem = null;
+    }
+
+    public class GalleryItem
+    {
+        public int Id { get; set; }
+        public string Title { get; set; }
+        public string Category { get; set; }
+        public string ThumbnailUrl { get; set; }
+        public string FullImageUrl { get; set; }
+    }
+}

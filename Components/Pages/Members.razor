@@ -1,0 +1,124 @@
+@page "/members"
+@using System.Collections.Generic
+@inject NavigationManager navigationManager
+
+<PageTitle>Члени сім'ї - Raven Family</PageTitle>
+
+<div class="content">
+    <h1 style="text-align: center; margin-top: 0;">👥 Члени сім'ї Воронів</h1>
+    <p style="text-align: center; color: rgba(232, 232, 232, 0.8); font-size: 1.1rem;">
+        Познайомтеся з учасниками нашої легендарної сім'ї
+    </p>
+
+    <div class="filter-controls">
+        <input 
+            type="text" 
+            class="form-control search-box" 
+            placeholder="🔍 Пошук по ніку..." 
+            @bind="searchQuery"
+            @bind:event="oninput" />
+        
+        <select class="form-select" style="max-width: 200px;" @bind="selectedRank" @bind:event="onchange">
+            <option value="">Всі ранги</option>
+            <option value="Leader">👑 Лідер</option>
+            <option value="Admin">🛡️ Адміністратор</option>
+            <option value="Officer">⚔️ Офіцер</option>
+            <option value="Member">🐦 Учасник</option>
+            <option value="Recruit">🌱 Новобранець</option>
+        </select>
+    </div>
+
+    <div class="members-grid">
+        @foreach (var member in FilteredMembers)
+        {
+            <div class="member-card">
+                <img src="@member.AvatarUrl" alt="@member.Nickname" class="member-avatar" />
+                <div class="member-name">@member.Nickname</div>
+                <div class="member-rank">@GetRankIcon(member.Rank) @member.Rank</div>
+                <div class="member-joined">Вступив: @member.JoinedDate.ToString("dd MMMM yyyy")</div>
+                <div class="member-actions">
+                    <button class="btn btn-primary btn-sm" @onclick="() => ViewProfile(member.Id)">
+                        Профіль
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+
+    @if (FilteredMembers.Count == 0)
+    {
+        <div style="text-align: center; padding: 3rem; color: rgba(232, 232, 232, 0.6);">
+            <p style="font-size: 1.2rem;">Членів не знайдено</p>
+        </div>
+    }
+</div>
+
+@code {
+    private List<FamilyMember> members = new();
+    private string searchQuery = "";
+    private string selectedRank = "";
+
+    protected override void OnInitialized()
+    {
+        // Демонстраційні дані - у реальному додатку це буде з бази даних
+        members = new List<FamilyMember>
+        {
+            new FamilyMember { Id = 1, Nickname = "Ragnar", Rank = "Leader", AvatarUrl = "https://via.placeholder.com/100?text=Ragnar", JoinedDate = new DateTime(2021, 1, 15) },
+            new FamilyMember { Id = 2, Nickname = "ShadowRaven", Rank = "Admin", AvatarUrl = "https://via.placeholder.com/100?text=Shadow", JoinedDate = new DateTime(2021, 3, 20) },
+            new FamilyMember { Id = 3, Nickname = "NightWing", Rank = "Officer", AvatarUrl = "https://via.placeholder.com/100?text=Night", JoinedDate = new DateTime(2021, 6, 10) },
+            new FamilyMember { Id = 4, Nickname = "Whisper", Rank = "Officer", AvatarUrl = "https://via.placeholder.com/100?text=Whisper", JoinedDate = new DateTime(2021, 7, 5) },
+            new FamilyMember { Id = 5, Nickname = "Crow", Rank = "Member", AvatarUrl = "https://via.placeholder.com/100?text=Crow", JoinedDate = new DateTime(2021, 9, 12) },
+            new FamilyMember { Id = 6, Nickname = "Eclipse", Rank = "Member", AvatarUrl = "https://via.placeholder.com/100?text=Eclipse", JoinedDate = new DateTime(2021, 10, 8) },
+            new FamilyMember { Id = 7, Nickname = "Phoenix", Rank = "Member", AvatarUrl = "https://via.placeholder.com/100?text=Phoenix", JoinedDate = new DateTime(2021, 11, 3) },
+            new FamilyMember { Id = 8, Nickname = "Raven", Rank = "Recruit", AvatarUrl = "https://via.placeholder.com/100?text=Raven", JoinedDate = new DateTime(2023, 1, 20) },
+            new FamilyMember { Id = 9, Nickname = "Midnight", Rank = "Member", AvatarUrl = "https://via.placeholder.com/100?text=Midnight", JoinedDate = new DateTime(2022, 5, 15) },
+            new FamilyMember { Id = 10, Nickname = "Vortex", Rank = "Officer", AvatarUrl = "https://via.placeholder.com/100?text=Vortex", JoinedDate = new DateTime(2021, 8, 22) }
+        };
+    }
+
+    private List<FamilyMember> FilteredMembers
+    {
+        get
+        {
+            return members
+                .Where(m => string.IsNullOrEmpty(searchQuery) || m.Nickname.Contains(searchQuery, StringComparison.OrdinalIgnoreCase))
+                .Where(m => string.IsNullOrEmpty(selectedRank) || m.Rank == selectedRank)
+                .OrderBy(m => GetRankOrder(m.Rank))
+                .ToList();
+        }
+    }
+
+    private string GetRankIcon(string rank) => rank switch
+    {
+        "Leader" => "👑",
+        "Admin" => "🛡️",
+        "Officer" => "⚔️",
+        "Member" => "🐦",
+        "Recruit" => "🌱",
+        _ => "❓"
+    };
+
+    private int GetRankOrder(string rank) => rank switch
+    {
+        "Leader" => 1,
+        "Admin" => 2,
+        "Officer" => 3,
+        "Member" => 4,
+        "Recruit" => 5,
+        _ => 6
+    };
+
+    private void ViewProfile(int memberId)
+    {
+        navigationManager.NavigateTo($"/profile/{memberId}");
+    }
+
+    public class FamilyMember
+    {
+        public int Id { get; set; }
+        public string Nickname { get; set; } = string.Empty;
+        public string Rank { get; set; } = string.Empty;
+        public string AvatarUrl { get; set; } = string.Empty;
+        public DateTime JoinedDate { get; set; }
+    }
+}
